@@ -1,0 +1,27 @@
+{
+  "scripts": {
+    "start": "nest start",
+    "start:dev": "nest start --watch",
+    "start:debug": "nest start --debug --watch",
+    "start:prod": "node dist/main",
+    "test": "cypress run",
+    "test:open": "cypress open"
+  },
+  "devDependencies": {
+    "@nestjs/cli": "^11.0.7",
+    "@types/express": "^5.0.2",
+    "@types/node": "^22.15.21",
+    "cypress": "^14.4.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.8.3"
+  },
+  "dependencies": {
+    "@nestjs/common": "^11.1.1",
+    "@nestjs/core": "^11.1.1",
+    "@nestjs/mapped-types": "^2.1.0",
+    "@nestjs/platform-express": "^11.1.1",
+    "@prisma/client": "^6.8.2",
+    "class-transformer": "^0.5.1",
+    "class-validator": "^0.14.2"
+  }
+}

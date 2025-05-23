@@ -1,0 +1,444 @@
+{
+	"info": {
+		"_postman_id": "1f42a917-e761-4bee-a8f2-7e7b24e23d62",
+		"name": "api krauser",
+		"description": "# API Petshop - Documentação\n\n**Objetivo:**\nAPI para gerenciamento de usuários, pets e produtos de um sistema de petshop.\n\n**Público-alvo:**\nDesenvolvedores e integradores de sistemas.\n\n**URL base:**\nhttp://localhost:3000\n\n**Autenticação:**\nAtualmente, esta API não exige autenticação para acesso às rotas.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "40712893"
+	},
+	"item": [
+		{
+			"name": "Usuários",
+			"item": [
+				{
+					"name": "Listar Usuários",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:3000/usuarios",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "3000",
+							"path": [
+								"usuarios"
+							]
+						},
+						"description": "Retorna a lista de todos os usuários cadastrados"
+					},
+					"response": []
+				},
+				{
+					"name": "Buscar Usuário por ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:3000/usuarios/1",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "3000",
+							"path": [
+								"usuarios",
+								"1"
+							]
+						},
+						"description": "Retorna um usuário específico pelo ID"
+					},
+					"response": []
+				},
+				{
+					"name": "Buscar Pets do Usuário",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:3000/usuarios/1/pets",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "3000",
+							"path": [
+								"usuarios",
+								"1",
+								"pets"
+							]
+						},
+						"description": "Retorna todos os pets de um usuário específico"
+					},
+					"response": []
+				},
+				{
+					"name": "Criar Usuário",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"nome\": \"Novo Usuário\",\n    \"email\": \"novo@email.com\",\n    \"senha\": \"123456\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:3000/usuarios",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "3000",
+							"path": [
+								"usuarios"
+							]
+						},
+						"description": "Cria um novo usuário"
+					},
+					"response": []
+				},
+				{
+					"name": "Atualizar Usuário",
+					"request": {
+						"method": "PATCH",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"nome\": \"Usuário Atualizado\",\n    \"email\": \"atualizado@email.com\",\n    \"senha\": \"novaSenha123\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:3000/usuarios/1",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "3000",
+							"path": [
+								"usuarios",
+								"1"
+							]
+						},
+						"description": "Atualiza os dados de um usuário existente"
+					},
+					"response": []
+				},
+				{
+					"name": "Excluir Usuário",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:3000/usuarios/1",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "3000",
+							"path": [
+								"usuarios",
+								"1"
+							]
+						},
+						"description": "Remove um usuário do sistema"
+					},
+					"response": []
+				}
+			],
+			"description": "## Usuários\n\n### Criar Usuário (POST /usuarios)\n- Cria um novo usuário no sistema.\n- Não requer autenticação.\n\n**Request body exemplo:**\n```json\n{\n  \"nome\": \"Novo Usuário\",\n  \"email\": \"novo@email.com\",\n  \"senha\": \"123456\"\n}\n```\n\n| Campo | Tipo   | Obrigatório | Descrição         |\n|-------|--------|-------------|-------------------|\n| nome  | string | Sim         | Nome do usuário   |\n| email | string | Sim         | E-mail válido     |\n| senha | string | Sim         | Senha do usuário  |\n\n**Response body exemplo:**\n```json\n{\n  \"id\": 1,\n  \"nome\": \"Novo Usuário\",\n  \"email\": \"novo@email.com\"\n}\n```\n\n| Campo | Tipo   | Descrição         |\n|-------|--------|-------------------|\n| id    | int    | ID do usuário     |\n| nome  | string | Nome do usuário   |\n| email | string | E-mail do usuário |\n\n**Códigos de resposta:**\n- 201: Usuário criado com sucesso\n- 400: Dados inválidos\n- 409: Nome ou e-mail já cadastrado\n- 500: Erro interno\n\n**Erros comuns:**\n- 400: Algum campo obrigatório não foi enviado ou está inválido.\n- 409: Já existe usuário com o mesmo nome ou e-mail."
+		},
+		{
+			"name": "Pets",
+			"item": [
+				{
+					"name": "Listar Pets",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:3000/pets",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "3000",
+							"path": [
+								"pets"
+							]
+						},
+						"description": "Retorna a lista de todos os pets cadastrados"
+					},
+					"response": []
+				},
+				{
+					"name": "Buscar Pet por ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:3000/pets/1",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "3000",
+							"path": [
+								"pets",
+								"1"
+							]
+						},
+						"description": "Retorna um pet específico pelo ID"
+					},
+					"response": []
+				},
+				{
+					"name": "Criar Pet",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"nome\": \"Rex\",\n    \"raca\": \"Labrador\",\n    \"usuarioId\": 1\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:3000/pets",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "3000",
+							"path": [
+								"pets"
+							]
+						},
+						"description": "Cria um novo pet"
+					},
+					"response": []
+				},
+				{
+					"name": "Atualizar Pet",
+					"request": {
+						"method": "PATCH",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"nome\": \"Rex Atualizado\",\n    \"raca\": \"Labrador Retriever\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:3000/pets/1",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "3000",
+							"path": [
+								"pets",
+								"1"
+							]
+						},
+						"description": "Atualiza os dados de um pet existente"
+					},
+					"response": []
+				},
+				{
+					"name": "Excluir Pet",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:3000/pets/1",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "3000",
+							"path": [
+								"pets",
+								"1"
+							]
+						},
+						"description": "Remove um pet do sistema"
+					},
+					"response": []
+				}
+			],
+			"description": "## Pets\n\n### Criar Pet (POST /pets)\n- Cria um novo pet vinculado a um usuário.\n- Não requer autenticação.\n\n**Request body exemplo:**\n```json\n{\n  \"nome\": \"Rex\",\n  \"raca\": \"Labrador\",\n  \"usuarioId\": 1\n}\n```\n\n| Campo     | Tipo   | Obrigatório | Descrição                |\n|-----------|--------|-------------|--------------------------|\n| nome      | string | Sim         | Nome do pet              |\n| raca      | string | Sim         | Raça do pet              |\n| usuarioId | int    | Sim         | ID do usuário proprietário|\n\n**Response body exemplo:**\n```json\n{\n  \"id\": 1,\n  \"nome\": \"Rex\",\n  \"raca\": \"Labrador\",\n  \"usuarioId\": 1\n}\n```\n\n| Campo     | Tipo   | Descrição                |\n|-----------|--------|--------------------------|\n| id        | int    | ID do pet                |\n| nome      | string | Nome do pet              |\n| raca      | string | Raça do pet              |\n| usuarioId | int    | ID do usuário proprietário|\n\n**Códigos de resposta:**\n- 201: Pet criado com sucesso\n- 400: Dados inválidos\n- 404: Usuário não encontrado\n- 500: Erro interno\n\n**Erros comuns:**\n- 400: Campos obrigatórios ausentes ou inválidos.\n- 404: Usuário informado não existe."
+		},
+		{
+			"name": "Produtos",
+			"item": [
+				{
+					"name": "Listar Produtos",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:3000/produtos",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "3000",
+							"path": [
+								"produtos"
+							]
+						},
+						"description": "Retorna a lista de todos os produtos cadastrados"
+					},
+					"response": []
+				},
+				{
+					"name": "Buscar Produto por ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:3000/produtos/1",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "3000",
+							"path": [
+								"produtos",
+								"1"
+							]
+						},
+						"description": "Retorna um produto específico pelo ID"
+					},
+					"response": []
+				},
+				{
+					"name": "Criar Produto",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "   {\n     \"nome\": \"Ração Premium\",\n     \"tipo\": \"Alimento\",\n     \"preco\": 99.90,\n     \"petId\": 1\n   }",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:3000/produtos",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "3000",
+							"path": [
+								"produtos"
+							]
+						},
+						"description": "Cria um novo produto"
+					},
+					"response": []
+				},
+				{
+					"name": "Atualizar Produto",
+					"request": {
+						"method": "PATCH",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"nome\": \"Ração Premium Plus\",\n    \"tipo\": \"Alimento Premium\",\n    \"preco\": 129.90\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:3000/produtos/1",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "3000",
+							"path": [
+								"produtos",
+								"1"
+							]
+						},
+						"description": "Atualiza os dados de um produto existente"
+					},
+					"response": []
+				},
+				{
+					"name": "Excluir Produto",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:3000/produtos/1",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "3000",
+							"path": [
+								"produtos",
+								"1"
+							]
+						},
+						"description": "Remove um produto do sistema"
+					},
+					"response": []
+				}
+			],
+			"description": "## Produtos\n\n### Criar Produto (POST /produtos)\n- Cria um novo produto, podendo ser vinculado a um pet.\n- Não requer autenticação.\n\n**Request body exemplo:**\n```json\n{\n  \"nome\": \"Ração Premium\",\n  \"tipo\": \"Alimento\",\n  \"preco\": 99.90,\n  \"petId\": 1\n}\n```\n\n| Campo  | Tipo    | Obrigatório | Descrição                |\n|--------|---------|-------------|--------------------------|\n| nome   | string  | Sim         | Nome do produto          |\n| tipo   | string  | Sim         | Tipo do produto          |\n| preco  | number  | Sim         | Preço do produto         |\n| petId  | int     | Não         | ID do pet relacionado    |\n\n**Response body exemplo:**\n```json\n{\n  \"id\": 1,\n  \"nome\": \"Ração Premium\",\n  \"tipo\": \"Alimento\",\n  \"preco\": 99.90,\n  \"petId\": 1\n}\n```\n\n| Campo  | Tipo    | Descrição                |\n|--------|---------|--------------------------|\n| id     | int     | ID do produto            |\n| nome   | string  | Nome do produto          |\n| tipo   | string  | Tipo do produto          |\n| preco  | number  | Preço do produto         |\n| petId  | int     | ID do pet relacionado    |\n\n**Códigos de resposta:**\n- 201: Produto criado com sucesso\n- 400: Dados inválidos\n- 404: Pet não encontrado\n- 500: Erro interno\n\n**Erros comuns:**\n- 400: Campos obrigatórios ausentes ou inválidos.\n- 404: Pet informado não existe."
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "id",
+			"value": "1"
+		},
+		{
+			"key": "base_url",
+			"value": "https://postman-rest-api-learner.glitch.me/"
+		}
+	]
+}
