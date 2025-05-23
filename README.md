@@ -30,7 +30,7 @@ Aplicativo mobile para gerenciamento de pets, desenvolvido com React Native e Ex
 
 1. Clone o repositório:
 ```bash
-git clone [URL_DO_REPOSITÓRIO]
+git clone [[URL_DO_REPOSITÓRIO]](https://github.com/diabetico2/petshop.git)
 ```
 
 2. Instale as dependências:
