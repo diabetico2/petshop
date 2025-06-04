@@ -1,58 +1,110 @@
-import { View, StyleSheet, FlatList } from 'react-native';
-import { Card, FAB, Text } from 'react-native-paper';
-import { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { View, StyleSheet, FlatList, Alert } from 'react-native';
+import { Text, Card, Button, ActivityIndicator } from 'react-native-paper';
+import { useAuth } from '../../contexts/AuthContext';
+import { supabase } from '../../lib/supabase';
+import { Pet } from '../../types';
+import { router } from 'expo-router';
 
-interface Pet {
-  id: string;
-  name: string;
-  species: string;
-  breed: string;
-  age: number;
-}
+export default function PetsScreen() {
+  const [pets, setPets] = useState<Pet[]>([]);
+  const [loading, setLoading] = useState(true);
+  const { user } = useAuth();
 
-export default function PetsList() {
-  const [pets, setPets] = useState<Pet[]>([
-    {
-      id: '1',
-      name: 'Rex',
-      species: 'Cachorro',
-      breed: 'Labrador',
-      age: 3,
-    },
-    {
-      id: '2',
-      name: 'Mia',
-      species: 'Gato',
-      breed: 'Siamês',
-      age: 2,
-    },
-  ]);
+  useEffect(() => {
+    loadPets();
+  }, []);
 
-  const renderPetCard = ({ item }: { item: Pet }) => (
+  async function loadPets() {
+    try {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from('Pet')
+        .select('*')
+        .eq('usuarioId', user?.id);
+
+      if (error) throw error;
+      setPets(data || []);
+    } catch (error) {
+      Alert.alert('Erro', 'Não foi possível carregar os pets');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleDeletePet(petId: number) {
+    try {
+      setLoading(true);
+      const { error } = await supabase
+        .from('Pet')
+        .delete()
+        .eq('id', petId);
+
+      if (error) throw error;
+      await loadPets();
+      Alert.alert('Sucesso', 'Pet removido com sucesso');
+    } catch (error) {
+      Alert.alert('Erro', 'Não foi possível remover o pet');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  const renderPet = ({ item }: { item: Pet }) => (
     <Card style={styles.card}>
       <Card.Content>
-        <Text variant="titleLarge">{item.name}</Text>
-        <Text variant="bodyMedium">Espécie: {item.species}</Text>
-        <Text variant="bodyMedium">Raça: {item.breed}</Text>
-        <Text variant="bodyMedium">Idade: {item.age} anos</Text>
+        <Text variant="titleLarge">{item.nome}</Text>
+        <Text variant="bodyMedium">Raça: {item.raca}</Text>
       </Card.Content>
+      <Card.Actions>
+        <Button
+          onPress={() => router.push(`/pets/${item.id}`)}
+          mode="contained"
+        >
+          Detalhes
+        </Button>
+        <Button
+          onPress={() => handleDeletePet(item.id)}
+          mode="outlined"
+          textColor="red"
+        >
+          Remover
+        </Button>
+      </Card.Actions>
     </Card>
   );
 
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" />
+      </View>
+    );
+  }
+
   return (
     <View style={styles.container}>
+      <View style={styles.header}>
+        <Text variant="headlineMedium">Meus Pets</Text>
+        <Button
+          mode="contained"
+          onPress={() => router.push('/pets/new')}
+          icon="plus"
+        >
+          Novo Pet
+        </Button>
+      </View>
+
       <FlatList
         data={pets}
-        renderItem={renderPetCard}
-        keyExtractor={(item) => item.id}
+        renderItem={renderPet}
+        keyExtractor={(item) => item.id.toString()}
         contentContainerStyle={styles.list}
-      />
-      <FAB
-        icon="plus"
-        style={styles.fab}
-        onPress={() => {
-          // Implementar adição de novo pet
-        }}
+        ListEmptyComponent={
+          <Text style={styles.emptyText}>
+            Você ainda não tem pets cadastrados
+          </Text>
+        }
       />
     </View>
   );
@@ -61,19 +113,28 @@ export default function PetsList() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
-  },
-  list: {
     padding: 16,
   },
-  card: {
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     marginBottom: 16,
   },
-  fab: {
-    position: 'absolute',
-    margin: 16,
-    right: 0,
-    bottom: 0,
-    backgroundColor: '#6200ee',
+  list: {
+    gap: 16,
+  },
+  card: {
+    marginBottom: 8,
+  },
+  emptyText: {
+    textAlign: 'center',
+    marginTop: 20,
+    fontSize: 16,
   },
 }); 
