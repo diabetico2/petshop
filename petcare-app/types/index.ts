@@ -1,21 +1,27 @@
 export interface Usuario {
-  id: number;
-  nome: string;
+  id: string;
   email: string;
-  senha: string;
+  nome: string;
+  created_at: string;
 }
 
 export interface Pet {
-  id: number;
+  id: string;
   nome: string;
+  especie: string;
   raca: string;
-  usuarioId: number;
+  data_nascimento: string;
+  foto_url?: string;
+  usuario_id: string;
+  created_at: string;
 }
 
 export interface Produto {
-  id: number;
+  id: string;
   nome: string;
-  tipo: string;
   preco: number;
-  petId: number;
+  data_compra: string;
+  observacoes?: string;
+  pet_id: string;
+  created_at: string;
 } 

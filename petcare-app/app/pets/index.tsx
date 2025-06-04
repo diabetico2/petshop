@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { View, StyleSheet, FlatList, Alert } from 'react-native';
-import { Text, Card, Button, ActivityIndicator } from 'react-native-paper';
+import { View, StyleSheet, FlatList, Alert, Image } from 'react-native';
+import { Text, Card, Button, ActivityIndicator, FAB, Surface } from 'react-native-paper';
 import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../lib/supabase';
 import { Pet } from '../../types';
 import { router } from 'expo-router';
+import { styles as themeStyles, theme } from '../../theme';
+import { LinearGradient } from 'expo-linear-gradient';
 
 export default function PetsScreen() {
   const [pets, setPets] = useState<Pet[]>([]);
@@ -33,66 +35,94 @@ export default function PetsScreen() {
   }
 
   async function handleDeletePet(petId: number) {
-    try {
-      setLoading(true);
-      const { error } = await supabase
-        .from('Pet')
-        .delete()
-        .eq('id', petId);
+    Alert.alert(
+      'Confirmar exclusão',
+      'Tem certeza que deseja remover este pet?',
+      [
+        {
+          text: 'Cancelar',
+          style: 'cancel',
+        },
+        {
+          text: 'Remover',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              setLoading(true);
+              const { error } = await supabase
+                .from('Pet')
+                .delete()
+                .eq('id', petId);
 
-      if (error) throw error;
-      await loadPets();
-      Alert.alert('Sucesso', 'Pet removido com sucesso');
-    } catch (error) {
-      Alert.alert('Erro', 'Não foi possível remover o pet');
-    } finally {
-      setLoading(false);
-    }
+              if (error) throw error;
+              await loadPets();
+              Alert.alert('Sucesso', 'Pet removido com sucesso');
+            } catch (error) {
+              Alert.alert('Erro', 'Não foi possível remover o pet');
+            } finally {
+              setLoading(false);
+            }
+          },
+        },
+      ]
+    );
   }
 
   const renderPet = ({ item }: { item: Pet }) => (
-    <Card style={styles.card}>
-      <Card.Content>
-        <Text variant="titleLarge">{item.nome}</Text>
-        <Text variant="bodyMedium">Raça: {item.raca}</Text>
-      </Card.Content>
-      <Card.Actions>
+    <Surface style={[styles.card, themeStyles.shadow]} elevation={2}>
+      <View style={styles.petImageContainer}>
+        <Text style={styles.petEmoji}>🐾</Text>
+      </View>
+      <View style={styles.petInfo}>
+        <Text variant="titleLarge" style={styles.petName}>{item.nome}</Text>
+        <Text variant="bodyMedium" style={styles.petBreed}>Raça: {item.raca}</Text>
+      </View>
+      <View style={styles.petActions}>
         <Button
-          onPress={() => router.push(`/pets/${item.id}`)}
           mode="contained"
+          onPress={() => router.push(`/pets/${item.id}`)}
+          style={styles.actionButton}
+          icon="paw"
         >
           Detalhes
         </Button>
         <Button
-          onPress={() => handleDeletePet(item.id)}
           mode="outlined"
-          textColor="red"
+          onPress={() => handleDeletePet(item.id)}
+          textColor={theme.colors.error}
+          style={styles.actionButton}
+          icon="delete"
         >
           Remover
         </Button>
-      </Card.Actions>
-    </Card>
+      </View>
+    </Surface>
   );
 
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" />
+        <ActivityIndicator size="large" color={theme.colors.primary} />
       </View>
     );
   }
 
   return (
     <View style={styles.container}>
+      <LinearGradient
+        colors={['#f6f6f6', '#ffffff']}
+        style={styles.background}
+      />
+
       <View style={styles.header}>
-        <Text variant="headlineMedium">Meus Pets</Text>
-        <Button
-          mode="contained"
-          onPress={() => router.push('/pets/new')}
-          icon="plus"
-        >
-          Novo Pet
-        </Button>
+        <View>
+          <Text variant="headlineMedium" style={styles.welcomeText}>
+            Olá, {user?.nome}!
+          </Text>
+          <Text variant="bodyLarge" style={styles.subtitle}>
+            Gerencie seus pets aqui
+          </Text>
+        </View>
       </View>
 
       <FlatList
@@ -101,10 +131,28 @@ export default function PetsScreen() {
         keyExtractor={(item) => item.id.toString()}
         contentContainerStyle={styles.list}
         ListEmptyComponent={
-          <Text style={styles.emptyText}>
-            Você ainda não tem pets cadastrados
-          </Text>
+          <Surface style={styles.emptyContainer} elevation={1}>
+            <Text style={styles.emptyEmoji}>🐾</Text>
+            <Text style={styles.emptyText}>
+              Você ainda não tem pets cadastrados
+            </Text>
+            <Button
+              mode="contained"
+              onPress={() => router.push('/pets/new')}
+              style={styles.emptyButton}
+              icon="plus"
+            >
+              Adicionar Pet
+            </Button>
+          </Surface>
         }
+      />
+
+      <FAB
+        icon="plus"
+        style={styles.fab}
+        onPress={() => router.push('/pets/new')}
+        label="Novo Pet"
       />
     </View>
   );
@@ -113,7 +161,13 @@ export default function PetsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 16,
+  },
+  background: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    top: 0,
+    bottom: 0,
   },
   loadingContainer: {
     flex: 1,
@@ -121,20 +175,75 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 16,
+    padding: 16,
+    paddingTop: 8,
+  },
+  welcomeText: {
+    color: theme.colors.primary,
+    fontWeight: 'bold',
+  },
+  subtitle: {
+    color: '#666',
   },
   list: {
-    gap: 16,
+    padding: 16,
   },
   card: {
-    marginBottom: 8,
+    marginBottom: 16,
+    borderRadius: 16,
+    overflow: 'hidden',
+  },
+  petImageContainer: {
+    height: 120,
+    backgroundColor: theme.colors.primary,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  petEmoji: {
+    fontSize: 48,
+  },
+  petInfo: {
+    padding: 16,
+  },
+  petName: {
+    fontWeight: 'bold',
+    marginBottom: 4,
+  },
+  petBreed: {
+    color: '#666',
+  },
+  petActions: {
+    flexDirection: 'row',
+    padding: 16,
+    paddingTop: 0,
+    gap: 8,
+  },
+  actionButton: {
+    flex: 1,
+  },
+  fab: {
+    position: 'absolute',
+    margin: 16,
+    right: 0,
+    bottom: 0,
+    backgroundColor: theme.colors.primary,
+  },
+  emptyContainer: {
+    padding: 32,
+    borderRadius: 16,
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+  },
+  emptyEmoji: {
+    fontSize: 48,
+    marginBottom: 16,
   },
   emptyText: {
     textAlign: 'center',
-    marginTop: 20,
-    fontSize: 16,
+    marginBottom: 16,
+    color: '#666',
+  },
+  emptyButton: {
+    marginTop: 8,
   },
 }); 

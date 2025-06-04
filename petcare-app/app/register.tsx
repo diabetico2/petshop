@@ -2,38 +2,48 @@ import React, { useState } from 'react';
 import { View, StyleSheet, Alert, ScrollView } from 'react-native';
 import { Text, TextInput, Button, ActivityIndicator, Surface } from 'react-native-paper';
 import { router } from 'expo-router';
-import { supabase } from '../../lib/supabase';
-import { styles as themeStyles, theme } from '../../theme';
+import { supabase } from '../lib/supabase';
+import { styles as themeStyles, theme } from '../theme';
 import { LinearGradient } from 'expo-linear-gradient';
 
-export default function NewPetScreen() {
-  const [nome, setNome] = useState('');
-  const [raca, setRaca] = useState('');
+export default function RegisterScreen() {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
 
-  async function handleSubmit() {
-    if (!nome || !raca) {
+  async function handleRegister() {
+    if (!email || !password || !confirmPassword) {
       Alert.alert('Erro', 'Por favor, preencha todos os campos');
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      Alert.alert('Erro', 'As senhas não coincidem');
       return;
     }
 
     try {
       setLoading(true);
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      if (!user) throw new Error('Usuário não autenticado');
-
-      const { error } = await supabase.from('Pet').insert({
-        nome,
-        raca,
-        userId: user.id,
+      const { error: signUpError } = await supabase.auth.signUp({
+        email,
+        password,
       });
 
-      if (error) throw error;
-      Alert.alert('Sucesso', 'Pet adicionado com sucesso');
-      router.replace('/pets');
+      if (signUpError) throw signUpError;
+
+      Alert.alert(
+        'Sucesso',
+        'Conta criada com sucesso! Verifique seu email para confirmar o cadastro.',
+        [
+          {
+            text: 'OK',
+            onPress: () => router.replace('/'),
+          },
+        ]
+      );
     } catch (error) {
-      Alert.alert('Erro', 'Não foi possível adicionar o pet');
+      Alert.alert('Erro', 'Não foi possível criar a conta');
     } finally {
       setLoading(false);
     }
@@ -49,36 +59,49 @@ export default function NewPetScreen() {
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <Surface style={[styles.card, themeStyles.shadow]} elevation={2}>
           <Text variant="headlineMedium" style={styles.title}>
-            Novo Pet
+            Criar Conta
           </Text>
 
           <TextInput
-            label="Nome do Pet"
-            value={nome}
-            onChangeText={setNome}
+            label="Email"
+            value={email}
+            onChangeText={setEmail}
             mode="outlined"
             style={styles.input}
-            left={<TextInput.Icon icon="paw" />}
+            keyboardType="email-address"
+            autoCapitalize="none"
+            left={<TextInput.Icon icon="email" />}
           />
 
           <TextInput
-            label="Raça"
-            value={raca}
-            onChangeText={setRaca}
+            label="Senha"
+            value={password}
+            onChangeText={setPassword}
             mode="outlined"
             style={styles.input}
-            left={<TextInput.Icon icon="dog" />}
+            secureTextEntry
+            left={<TextInput.Icon icon="lock" />}
+          />
+
+          <TextInput
+            label="Confirmar Senha"
+            value={confirmPassword}
+            onChangeText={setConfirmPassword}
+            mode="outlined"
+            style={styles.input}
+            secureTextEntry
+            left={<TextInput.Icon icon="lock-check" />}
           />
 
           <Button
             mode="contained"
-            onPress={handleSubmit}
+            onPress={handleRegister}
             loading={loading}
             disabled={loading}
             style={styles.button}
-            icon="check"
+            icon="account-plus"
           >
-            Adicionar Pet
+            Criar Conta
           </Button>
 
           <Button
@@ -87,7 +110,7 @@ export default function NewPetScreen() {
             style={styles.button}
             icon="arrow-left"
           >
-            Voltar
+            Voltar para Login
           </Button>
         </Surface>
       </ScrollView>

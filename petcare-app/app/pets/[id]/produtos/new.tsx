@@ -1,39 +1,38 @@
 import React, { useState } from 'react';
 import { View, StyleSheet, Alert, ScrollView } from 'react-native';
 import { Text, TextInput, Button, ActivityIndicator, Surface } from 'react-native-paper';
-import { router } from 'expo-router';
-import { supabase } from '../../lib/supabase';
-import { styles as themeStyles, theme } from '../../theme';
+import { useLocalSearchParams, router } from 'expo-router';
+import { supabase } from '../../../../lib/supabase';
+import { styles as themeStyles, theme } from '../../../../theme';
 import { LinearGradient } from 'expo-linear-gradient';
 
-export default function NewPetScreen() {
+export default function NewProdutoScreen() {
+  const { id } = useLocalSearchParams();
   const [nome, setNome] = useState('');
-  const [raca, setRaca] = useState('');
+  const [tipo, setTipo] = useState('');
+  const [preco, setPreco] = useState('');
   const [loading, setLoading] = useState(false);
 
   async function handleSubmit() {
-    if (!nome || !raca) {
+    if (!nome || !tipo || !preco) {
       Alert.alert('Erro', 'Por favor, preencha todos os campos');
       return;
     }
 
     try {
       setLoading(true);
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      if (!user) throw new Error('Usuário não autenticado');
-
-      const { error } = await supabase.from('Pet').insert({
+      const { error } = await supabase.from('Produto').insert({
         nome,
-        raca,
-        userId: user.id,
+        tipo,
+        preco: parseFloat(preco),
+        petId: id,
       });
 
       if (error) throw error;
-      Alert.alert('Sucesso', 'Pet adicionado com sucesso');
-      router.replace('/pets');
+      Alert.alert('Sucesso', 'Produto adicionado com sucesso');
+      router.back();
     } catch (error) {
-      Alert.alert('Erro', 'Não foi possível adicionar o pet');
+      Alert.alert('Erro', 'Não foi possível adicionar o produto');
     } finally {
       setLoading(false);
     }
@@ -49,25 +48,35 @@ export default function NewPetScreen() {
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <Surface style={[styles.card, themeStyles.shadow]} elevation={2}>
           <Text variant="headlineMedium" style={styles.title}>
-            Novo Pet
+            Novo Produto
           </Text>
 
           <TextInput
-            label="Nome do Pet"
+            label="Nome do Produto"
             value={nome}
             onChangeText={setNome}
             mode="outlined"
             style={styles.input}
-            left={<TextInput.Icon icon="paw" />}
+            left={<TextInput.Icon icon="tag" />}
           />
 
           <TextInput
-            label="Raça"
-            value={raca}
-            onChangeText={setRaca}
+            label="Tipo"
+            value={tipo}
+            onChangeText={setTipo}
             mode="outlined"
             style={styles.input}
-            left={<TextInput.Icon icon="dog" />}
+            left={<TextInput.Icon icon="shape" />}
+          />
+
+          <TextInput
+            label="Preço"
+            value={preco}
+            onChangeText={setPreco}
+            mode="outlined"
+            style={styles.input}
+            keyboardType="decimal-pad"
+            left={<TextInput.Icon icon="currency-brl" />}
           />
 
           <Button
@@ -78,7 +87,7 @@ export default function NewPetScreen() {
             style={styles.button}
             icon="check"
           >
-            Adicionar Pet
+            Adicionar Produto
           </Button>
 
           <Button

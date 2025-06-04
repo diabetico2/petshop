@@ -1,70 +1,79 @@
 # PetCare App
 
-Aplicativo mobile para gerenciamento de pets, desenvolvido com React Native e Expo.
+Um aplicativo para gerenciar os cuidados do seu pet, desenvolvido com React Native e Expo.
 
 ## Funcionalidades
 
+- Autenticação de usuários
 - Cadastro e gerenciamento de pets
-- Agendamento de consultas veterinárias
-- Histórico de saúde do pet
-- Perfil do usuário com múltiplos pets
+- Cadastro e gerenciamento de produtos para pets
+- Interface moderna e intuitiva
 
 ## Tecnologias Utilizadas
 
-- TypeScript
 - React Native
 - Expo
-- Expo Router
-- Prisma
+- TypeScript
 - React Native Paper
-- AsyncStorage
+- Supabase (Autenticação e Banco de Dados)
 
-## Requisitos
+## Pré-requisitos
 
-- Node.js 16 ou superior
+- Node.js (versão 14 ou superior)
 - npm ou yarn
 - Expo CLI
-- Android Studio (para emulador Android) ou Xcode (para iOS)
+- Conta no Supabase
 
 ## Instalação
 
 1. Clone o repositório:
 ```bash
-git clone [URL_DO_REPOSITÓRIO]
+git clone https://github.com/seu-usuario/petcare-app.git
+cd petcare-app
 ```
 
 2. Instale as dependências:
 ```bash
-cd petcare-app
 npm install
 ```
 
-3. Inicie o projeto:
+3. Configure as variáveis de ambiente:
+- Copie o arquivo `.env.example` para `.env`
+- Preencha as variáveis com suas credenciais do Supabase:
+  - `SUPABASE_URL`: URL do seu projeto no Supabase
+  - `SUPABASE_ANON_KEY`: Chave anônima do seu projeto no Supabase
+
+4. Inicie o aplicativo:
 ```bash
-npx expo start
+npm start
 ```
 
 ## Estrutura do Projeto
 
 ```
-src/
-  ├── app/           # Rotas e navegação (Expo Router)
-  ├── components/    # Componentes reutilizáveis
-  ├── screens/       # Telas do aplicativo
-  ├── services/      # Serviços e APIs
-  ├── types/         # Definições de tipos TypeScript
-  └── utils/         # Funções utilitárias
+petcare-app/
+├── app/                    # Diretório principal da aplicação
+│   ├── _layout.tsx        # Layout principal
+│   ├── index.tsx          # Tela de login
+│   ├── register.tsx       # Tela de registro
+│   └── pets/              # Telas relacionadas a pets
+├── lib/                   # Bibliotecas e configurações
+│   └── supabase.ts        # Configuração do Supabase
+├── types/                 # Definições de tipos
+│   ├── index.ts           # Tipos da aplicação
+│   └── env.d.ts           # Tipos para variáveis de ambiente
+└── theme/                 # Configurações de tema
+    └── index.ts           # Definição do tema
 ```
 
-## Como Executar
+## Contribuição
 
-1. Instale o aplicativo Expo Go no seu dispositivo móvel
-2. Escaneie o QR Code que aparece no terminal após executar `npx expo start`
-3. O aplicativo será carregado no seu dispositivo
+1. Faça um fork do projeto
+2. Crie uma branch para sua feature (`git checkout -b feature/nova-feature`)
+3. Faça commit das suas alterações (`git commit -m 'Adiciona nova feature'`)
+4. Faça push para a branch (`git push origin feature/nova-feature`)
+5. Abra um Pull Request
 
-## Desenvolvimento
+## Licença
 
-Para desenvolvimento, você pode usar:
-- Emulador Android/iOS
-- Dispositivo físico com Expo Go
-- Web browser (algumas funcionalidades podem ter limitações) 
+Este projeto está licenciado sob a licença MIT - veja o arquivo [LICENSE](LICENSE) para mais detalhes. 
