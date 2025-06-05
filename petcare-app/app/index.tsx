@@ -10,7 +10,6 @@ export default function LoginScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
 
   async function handleLogin() {
     if (!email || !password) {
@@ -18,17 +17,39 @@ export default function LoginScreen() {
       return;
     }
 
+    if (!email.includes('@')) {
+      Alert.alert('Erro', 'Por favor, insira um email válido');
+      return;
+    }
+
+    if (password.length < 6) {
+      Alert.alert('Erro', 'A senha deve ter pelo menos 6 caracteres');
+      return;
+    }
+
     try {
       setLoading(true);
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: email.trim(),
+        password: password.trim(),
       });
 
-      if (error) throw error;
-      router.replace('/pets');
-    } catch (error) {
-      Alert.alert('Erro', 'Credenciais inválidas');
+      if (error) {
+        console.error('Login error:', error);
+        throw error;
+      }
+
+      if (data?.user) {
+        router.replace('/pets');
+      } else {
+        throw new Error('Usuário não encontrado');
+      }
+    } catch (error: any) {
+      console.error('Login error details:', error);
+      Alert.alert(
+        'Erro no Login',
+        error.message || 'Verifique suas credenciais e tente novamente'
+      );
     } finally {
       setLoading(false);
     }
@@ -56,10 +77,10 @@ export default function LoginScreen() {
             value={email}
             onChangeText={setEmail}
             mode="outlined"
+            style={styles.input}
             keyboardType="email-address"
             autoCapitalize="none"
-            left={<TextInput.Icon icon="email-outline" />}
-            style={styles.input}
+            left={<TextInput.Icon icon="email" />}
           />
 
           <TextInput
@@ -67,10 +88,9 @@ export default function LoginScreen() {
             value={password}
             onChangeText={setPassword}
             mode="outlined"
-            secureTextEntry={!showPassword}
-            left={<TextInput.Icon icon="lock-outline" />}
-            right={<TextInput.Icon icon={showPassword ? "eye" : "eye-off"} onPress={() => setShowPassword(!showPassword)} />}
             style={styles.input}
+            secureTextEntry
+            left={<TextInput.Icon icon="lock" />}
           />
 
           <Button
