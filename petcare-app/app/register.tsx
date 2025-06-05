@@ -105,6 +105,7 @@ export default function RegisterScreen() {
 
       if (data?.user) {
         console.log('Signup successful, user created');
+        console.log('Attempting to show success alert');
         Alert.alert(
           'Sucesso no Cadastro',
           'Conta criada com sucesso! Você já pode fazer login.',

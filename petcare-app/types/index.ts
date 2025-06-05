@@ -10,10 +10,13 @@ export interface Pet {
   nome: string;
   especie: string;
   raca: string;
-  data_nascimento: string;
-  foto_url?: string;
-  usuario_id: string;
+  idade: number;
+  sexo: string;
+  corPelagem: string;
+  castrado: boolean;
+  user_id: string;
   created_at: string;
+  foto_url?: string;
 }
 
 export interface Produto {

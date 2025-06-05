@@ -11,30 +11,41 @@ import { LinearGradient } from 'expo-linear-gradient';
 export default function PetsScreen() {
   const [pets, setPets] = useState<Pet[]>([]);
   const [loading, setLoading] = useState(true);
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
 
   useEffect(() => {
-    loadPets();
-  }, []);
+    if (!authLoading && user) {
+      loadPets();
+    } else if (!authLoading && !user) {
+      setPets([]);
+      setLoading(false);
+    }
+  }, [user, authLoading]);
 
   async function loadPets() {
     try {
       setLoading(true);
+      console.log('Attempting to load pets for user ID:', user?.id);
       const { data, error } = await supabase
         .from('Pet')
-        .select('*')
-        .eq('usuarioId', user?.id);
+        .select('id, nome, raca, especie, idade, sexo, corPelagem, castrado, user_id, created_at')
+        .eq('user_id', user?.id);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase error loading pets:', error);
+        throw error;
+      }
+      console.log('Supabase data received:', data);
       setPets(data || []);
-    } catch (error) {
-      Alert.alert('Erro', 'Não foi possível carregar os pets');
+    } catch (error: any) {
+      console.error('Erro ao carregar pets:', error);
+      Alert.alert('Erro', `Não foi possível carregar os pets: ${error.message}`);
     } finally {
       setLoading(false);
     }
   }
 
-  async function handleDeletePet(petId: number) {
+  async function handleDeletePet(petId: string) {
     Alert.alert(
       'Confirmar exclusão',
       'Tem certeza que deseja remover este pet?',

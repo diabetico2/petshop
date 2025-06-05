@@ -131,6 +131,8 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     padding: 16,
+    flexGrow: 1,
+    justifyContent: 'center',
   },
   card: {
     padding: 24,
