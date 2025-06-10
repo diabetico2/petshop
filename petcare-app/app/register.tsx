@@ -7,6 +7,7 @@ import { styles as themeStyles, theme } from '../theme';
 import { LinearGradient } from 'expo-linear-gradient';
 
 export default function RegisterScreen() {
+  const [nome, setNome] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -35,108 +36,80 @@ export default function RegisterScreen() {
     return false;
   };
 
-  async function handleRegister() {
-    console.log('handleRegister called');
-    if (checkRateLimit()) {
-      console.log('Rate limit check returned true');
+  const handleRegister = async () => {
+    if (loading) return; // Prevent multiple submissions
+    setLoading(true);
+
+    // Basic validation (can be improved)
+    if (!nome || !email || !password || !confirmPassword) {
+      Alert.alert('Erro de Validação', 'Por favor, preencha todos os campos e garanta que a senha tenha pelo menos 6 caracteres.');
+      setLoading(false);
       return;
     }
-    console.log('Rate limit check passed');
 
-    if (!email || !password || !confirmPassword) {
-      console.log('Validation failed: missing fields');
-      Alert.alert('Erro de Cadastro', 'Por favor, preencha todos os campos');
+    // Email format validation
+    if (!validateEmail(email)) {
+      Alert.alert('Erro de Validação', 'Por favor, insira um email válido.');
+      setLoading(false);
       return;
     }
-    console.log('Validation passed: fields present');
 
-    const trimmedEmail = email.trim().toLowerCase();
-    if (!validateEmail(trimmedEmail)) {
-      console.log('Validation failed: invalid email');
-      Alert.alert('Erro de Cadastro', 'Por favor, insira um email válido');
-      return;
-    }
-    console.log('Validation passed: valid email format');
-
+    // Password length validation
     if (password.length < 6) {
-      console.log('Validation failed: password too short');
-      Alert.alert('Erro de Cadastro', 'A senha deve ter pelo menos 6 caracteres');
+      Alert.alert('Erro de Validação', 'A senha deve ter pelo menos 6 caracteres.');
+      setLoading(false);
       return;
     }
-     console.log('Validation passed: password length ok');
 
+    // Confirm password validation
     if (password !== confirmPassword) {
-      console.log('Validation failed: passwords do not match');
-      Alert.alert('Erro de Cadastro', 'As senhas não coincidem');
+      Alert.alert('Erro de Validação', 'As senhas não coincidem.');
+      setLoading(false);
       return;
     }
-    console.log('Validation passed: passwords match');
 
     try {
-      setLoading(true);
-      console.log('Attempting supabase signup');
-
-      const { data, error } = await supabase.auth.signUp({
-        email: trimmedEmail,
-        password: password.trim(),
+      // 1. Register the user in Supabase Auth, including name in metadata
+      const { data, error: authError } = await supabase.auth.signUp({
+        email: email.toLowerCase(),
+        password: password,
+        options: { // Include options for user metadata
+          data: {
+            nome: nome, // Add the name to user metadata
+          }
+        }
       });
 
-      if (error) {
-        console.error('Registration error:', error);
-        if (error.message.includes('already registered') || error.message.includes('already exists')) {
-          Alert.alert('Erro de Cadastro', 'Este email já está cadastrado. Tente fazer login.');
-          return;
-        }
-        if (error.message.includes('seconds')) {
-          const seconds = error.message.match(/\d+/)?.[0] || '46';
-          Alert.alert(
-            'Aguarde um momento',
-            `Por motivos de segurança, aguarde ${seconds} segundos antes de tentar novamente.`
-          );
-          return;
-        }
-        // Generic error for other Supabase signup issues
-        Alert.alert(
-          'Erro no Cadastro',
-          error.message || 'Ocorreu um erro inesperado ao criar a conta. Tente novamente.'
-        );
-        throw error; // Still throw to log the original error
+      if (authError) throw authError;
+
+      // Check if user and session are created
+      if (data.user && data.session) {
+        console.log('User registered in Supabase Auth with metadata:', data.user);
+        
+        // Registration successful
+        Alert.alert('Sucesso!', 'Conta criada com sucesso. Você já pode fazer login.', [
+          {
+            text: 'OK',
+            onPress: () => {
+              // Navigate to login after successful registration
+              router.replace('/');
+            }
+          }
+        ]);
+      } else {
+        // This case might happen if email confirmation is required and not automatic
+         Alert.alert('Conta Criada (Confirmação Necessária)', 'Sua conta foi criada. Verifique seu email para confirmar antes de fazer login.');
+         // Depending on Supabase config, you might want to redirect here too
+         router.replace('/');
       }
 
-      if (data?.user) {
-        console.log('Signup successful, user created');
-        console.log('Attempting to show success alert');
-        Alert.alert(
-          'Sucesso no Cadastro',
-          'Conta criada com sucesso! Você já pode fazer login.',
-          [
-            {
-              text: 'OK',
-              onPress: () => {
-                router.replace('/');
-              },
-            },
-          ]
-        );
-      } else {
-        console.log('Signup returned no user data');
-        // This case might happen if signUp succeeds but doesn't immediately return user data (less common with email/password)
-         Alert.alert('Erro no Cadastro', 'Conta criada, mas houve um problema ao obter os dados do usuário.');
-         // Depending on flow, might still navigate or handle differently
-      }
     } catch (error: any) {
-      console.error('Registration error details:', error);
-      // Fallback for any errors not caught above or general network issues
-      if (!(error.message.includes('already registered') || error.message.includes('already exists') || error.message.includes('seconds')))
-      Alert.alert(
-        'Erro no Cadastro',
-        error.message || 'Não foi possível criar a conta devido a um erro. Tente novamente.'
-      );
+      console.error('Registration error:', error);
+      Alert.alert('Erro ao Criar Conta', error.message);
     } finally {
       setLoading(false);
-      console.log('handleRegister finished');
     }
-  }
+  };
 
   return (
     <View style={styles.container}>
@@ -150,6 +123,19 @@ export default function RegisterScreen() {
           <Text variant="headlineMedium" style={styles.title}>
             Criar Conta
           </Text>
+
+          <TextInput
+            label="Nome"
+            value={nome}
+            onChangeText={setNome}
+            mode="outlined"
+            style={styles.input}
+            keyboardType="default"
+            autoCapitalize="words"
+            autoComplete="name"
+            textContentType="name"
+            left={<TextInput.Icon icon="account" />}
+          />
 
           <TextInput
             label="Email"

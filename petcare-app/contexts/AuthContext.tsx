@@ -1,9 +1,9 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
-import { Usuario } from '../types';
+import { User } from '../types';
 
 interface AuthContextData {
-  user: Usuario | null;
+  user: User | null;
   loading: boolean;
   signIn: (email: string, senha: string) => Promise<void>;
   signOut: () => Promise<void>;
@@ -12,27 +12,47 @@ interface AuthContextData {
 const AuthContext = createContext<AuthContextData>({} as AuthContextData);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<Usuario | null>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     // Verificar sessão atual
     checkUser();
+    // Listen for auth state changes
+    const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
+      console.log('AuthContext: onAuthStateChange event:', _event, 'session:', session);
+      if (session?.user) {
+        // Construir o objeto user a partir dos dados do Supabase Auth
+        setUser({
+          id: session.user.id,
+          email: session.user.email || '',
+          nome: session.user.user_metadata.nome || 'Usuário', // Obter nome dos metadados
+          created_at: session.user.created_at || '',
+        });
+      } else {
+        setUser(null);
+      }
+      setLoading(false);
+    });
+
+    return () => {
+      authListener?.subscription?.unsubscribe();
+    };
   }, []);
 
   async function checkUser() {
     try {
+      console.log('AuthContext: checking user session...');
       const { data: { session } } = await supabase.auth.getSession();
+      console.log('AuthContext: getSession result:', session);
       if (session?.user) {
-        const { data: userData } = await supabase
-          .from('Usuario')
-          .select('*')
-          .eq('email', session.user.email)
-          .single();
-        
-        if (userData) {
-          setUser(userData);
-        }
+        // Construir o objeto user diretamente da sessão, usando metadados
+        setUser({
+          id: session.user.id,
+          email: session.user.email || '',
+          nome: session.user.user_metadata.nome || 'Usuário', // Obter nome dos metadados
+          created_at: session.user.created_at || '',
+        });
       }
     } catch (error) {
       console.error('Erro ao verificar usuário:', error);
@@ -44,23 +64,29 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   async function signIn(email: string, senha: string) {
     try {
       setLoading(true);
+      console.log('AuthContext: attempting to sign in with email:', email);
       const { data: { session }, error } = await supabase.auth.signInWithPassword({
         email,
         password: senha,
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('AuthContext: signIn error:', error);
+        throw error;
+      }
+
+      console.log('AuthContext: signIn successful, session:', session);
 
       if (session?.user) {
-        const { data: userData } = await supabase
-          .from('Usuario')
-          .select('*')
-          .eq('email', session.user.email)
-          .single();
-        
-        if (userData) {
-          setUser(userData);
-        }
+        // Construir o objeto user diretamente da sessão, usando metadados
+        setUser({
+          id: session.user.id,
+          email: session.user.email || '',
+          nome: session.user.user_metadata.nome || 'Usuário', // Obter nome dos metadados
+          created_at: session.user.created_at || '',
+        });
+      } else {
+        setUser(null); // Se não houver sessão após login, definir como null
       }
     } catch (error) {
       console.error('Erro ao fazer login:', error);

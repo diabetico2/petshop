@@ -90,9 +90,6 @@ export default function PetDetailsScreen() {
             <Text variant="bodyLarge" style={styles.petDetails}>
               {pet.especie} • {pet.raca}
             </Text>
-            <Text variant="bodyMedium" style={styles.petDetails}>
-              Nascimento: {new Date(pet.data_nascimento).toLocaleDateString()}
-            </Text>
           </View>
         </Surface>
 

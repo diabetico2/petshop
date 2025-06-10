@@ -14,6 +14,7 @@ export default function PetsScreen() {
   const { user, loading: authLoading } = useAuth();
 
   useEffect(() => {
+    console.log('useEffect in PetsScreen triggered. authLoading:', authLoading, 'user:', user);
     if (!authLoading && user) {
       loadPets();
     } else if (!authLoading && !user) {

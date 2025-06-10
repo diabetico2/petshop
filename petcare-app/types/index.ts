@@ -5,6 +5,14 @@ export interface Usuario {
   created_at: string;
 }
 
+// Nova interface User para o contexto de autenticação
+export interface User {
+  id: string;
+  email: string;
+  nome: string;
+  created_at: string;
+}
+
 export interface Pet {
   id: string;
   nome: string;
@@ -25,6 +33,8 @@ export interface Produto {
   preco: number;
   data_compra: string;
   observacoes?: string;
-  pet_id: string;
-  created_at: string;
+  petid: string;
+  tipo: 'alimenticio' | 'medicinal';
+  quantidade_vezes?: number;
+  quando_consumir?: string;
 } 

@@ -40,7 +40,13 @@ function AppStack() {
           title: 'Detalhes do Pet',
         }}
       />
-       <Stack.Screen
+      <Stack.Screen
+        name="pets/[id]/edit"
+        options={{
+          title: 'Editar Pet',
+        }}
+      />
+      <Stack.Screen
         name="pets/[id]/produtos/new"
         options={{
           title: 'Novo Produto/Serviço',
