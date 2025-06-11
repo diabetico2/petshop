@@ -29,7 +29,7 @@ export default function PetsScreen() {
       console.log('Attempting to load pets for user ID:', user?.id);
       const { data, error } = await supabase
         .from('Pet')
-        .select('id, nome, raca, especie, idade, sexo, corPelagem, castrado, user_id, created_at')
+        .select('id, nome, raca, especie, idade, sexo, corPelagem, castrado, user_id, created_at, foto_url')
         .eq('user_id', user?.id);
 
       if (error) {
@@ -75,7 +75,7 @@ export default function PetsScreen() {
               setLoading(false);
             }
           },
-        },
+    },
       ]
     );
   }
@@ -83,7 +83,11 @@ export default function PetsScreen() {
   const renderPet = ({ item }: { item: Pet }) => (
     <Surface style={[styles.card, themeStyles.shadow]} elevation={2}>
       <View style={styles.petImageContainer}>
-        <Text style={styles.petEmoji}>🐾</Text>
+        {item.foto_url ? (
+          <Image source={{ uri: item.foto_url }} style={styles.petImagePreview} />
+        ) : (
+          <Text style={styles.petEmoji}>🐾</Text>
+        )}
       </View>
       <View style={styles.petInfo}>
         <Text variant="titleLarge" style={styles.petName}>{item.nome}</Text>
@@ -116,7 +120,7 @@ export default function PetsScreen() {
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color={theme.colors.primary} />
       </View>
-    );
+  );
   }
 
   return (
@@ -210,6 +214,12 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.primary,
     justifyContent: 'center',
     alignItems: 'center',
+    overflow: 'hidden',
+  },
+  petImagePreview: {
+    width: '100%',
+    height: '100%',
+    resizeMode: 'cover',
   },
   petEmoji: {
     fontSize: 48,

@@ -1,15 +1,16 @@
-import React, { useEffect, useState } from 'react';
-import { View, StyleSheet, Alert, ScrollView } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, StyleSheet, Alert, ScrollView, Image, Platform } from 'react-native';
 import { Text, TextInput, Button, ActivityIndicator, Surface, SegmentedButtons, Switch } from 'react-native-paper';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { supabase } from '../../../lib/supabase';
 import { styles as themeStyles, theme } from '../../../theme';
 import { LinearGradient } from 'expo-linear-gradient';
+import * as ImagePicker from 'expo-image-picker';
+import * as FileSystem from 'expo-file-system';
 import { Pet } from '../../../types';
 
 export default function EditPetScreen() {
   const { id } = useLocalSearchParams();
-  const router = useRouter();
   const [pet, setPet] = useState<Pet | null>(null);
   const [nome, setNome] = useState('');
   const [raca, setRaca] = useState('');
@@ -19,6 +20,7 @@ export default function EditPetScreen() {
   const [corPelagem, setCorPelagem] = useState('');
   const [castrado, setCastrado] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [foto, setFoto] = useState<string | null>(null);
 
   useEffect(() => {
     if (id) {
@@ -26,7 +28,7 @@ export default function EditPetScreen() {
     }
   }, [id]);
 
-  const loadPet = async () => {
+  async function loadPet() {
     try {
       setLoading(true);
       const { data, error } = await supabase
@@ -35,23 +37,118 @@ export default function EditPetScreen() {
         .eq('id', id)
         .single();
 
-      if (error) throw error;
-      
-      setPet(data);
-      setNome(data.nome);
-      setRaca(data.raca);
-      setEspecie(data.especie);
-      setIdade(data.idade.toString());
-      setSexo(data.sexo);
-      setCorPelagem(data.corPelagem);
-      setCastrado(data.castrado);
+      if (error) {
+        throw error;
+      }
 
+      if (data) {
+        setPet(data);
+        setNome(data.nome);
+        setRaca(data.raca);
+        setEspecie(data.especie);
+        setIdade(String(data.idade));
+        setSexo(data.sexo);
+        setCorPelagem(data.corPelagem);
+        setCastrado(data.castrado);
+        setFoto(data.foto_url); // Carrega a foto existente
+      }
     } catch (error: any) {
-      console.error('Erro ao carregar pet para edição:', error);
-      Alert.alert('Erro', `Não foi possível carregar o pet: ${error.message}`);
+      console.error('Erro ao carregar dados do pet:', error);
+      Alert.alert('Erro', 'Não foi possível carregar os dados do pet.');
       router.back();
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function pickImage() {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    
+    if (status !== 'granted') {
+      Alert.alert('Erro', 'Precisamos de permissão para acessar suas fotos');
+      return;
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.5,
+    });
+
+    if (!result.canceled) {
+      setFoto(result.assets[0].uri);
+    }
+  }
+
+  const uploadImage = async (uri: string, userId: string) => {
+    try {
+      let dataToUpload: Blob | Uint8Array;
+      let mimeType: string;
+      let fileExtension: string | undefined;
+
+      if (Platform.OS === 'web') {
+        const matches = uri.match(/^data:(.*?);base64,(.*)$/);
+        if (!matches || matches.length < 3) {
+          throw new Error('URI de imagem inválida ou formato inesperado.');
+        }
+        mimeType = matches[1].toLowerCase();
+        const base64Data = matches[2];
+
+        const decodedBytes = decodeBase64(base64Data);
+        dataToUpload = decodedBytes;
+        fileExtension = mimeType.split('/').pop();
+      } else {
+        fileExtension = uri.split('.').pop()?.toLowerCase();
+        mimeType = 'application/octet-stream'; 
+        if (fileExtension === 'jpg' || fileExtension === 'jpeg') {
+          mimeType = 'image/jpeg';
+        } else if (fileExtension === 'png') {
+          mimeType = 'image/png';
+        } else if (fileExtension === 'gif') {
+          mimeType = 'image/gif';
+        }
+
+        const base64 = await FileSystem.readAsStringAsync(uri, { encoding: FileSystem.EncodingType.Base64 });
+        const decodedBytes = decodeBase64(base64);
+        dataToUpload = new Blob([decodedBytes], { type: mimeType });
+      }
+      
+      console.log('URI da imagem:', uri);
+      console.log('Tipo MIME do Blob (inferido): ', mimeType);
+      console.log('Tamanho do dado para upload (bytes):', dataToUpload instanceof Blob ? dataToUpload.size : dataToUpload.byteLength);
+
+      if (!['image/jpeg', 'image/png', 'image/gif'].includes(mimeType)) {
+        throw new Error('Formato de imagem não suportado. Use JPG, PNG ou GIF.');
+      }
+
+      if (!fileExtension) {
+        throw new Error('Não foi possível determinar a extensão do arquivo.');
+      }
+
+      const filename = `pet-${Date.now()}.${fileExtension}`;
+      const filePath = `${userId}/${filename}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('pets')
+        .upload(filePath, dataToUpload, {
+          contentType: mimeType
+        });
+
+      if (uploadError) {
+        throw uploadError;
+      }
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('pets')
+        .getPublicUrl(filePath);
+      
+      console.log('URL Pública da Imagem no Supabase:', publicUrl);
+
+      return publicUrl;
+    } catch (error: any) {
+      console.error('Erro detalhado ao fazer upload da imagem:', error);
+      throw error;
     }
   };
 
@@ -68,19 +165,41 @@ export default function EditPetScreen() {
 
     try {
       setLoading(true);
-      const { error } = await supabase.from('Pet').update({
-        nome,
-        raca,
-        especie,
-        idade: parseInt(idade, 10),
-        sexo,
-        corPelagem,
-        castrado,
-      }).eq('id', id);
+      const { data: { user } } = await supabase.auth.getUser();
+
+      if (!user) {
+        console.error('Erro: Usuário não autenticado no handleSubmit.');
+        throw new Error('Usuário não autenticado');
+      }
+
+      let foto_url = pet?.foto_url || null; // Manter a foto_url existente por padrão
+      if (foto && foto !== pet?.foto_url) { // Se uma nova foto foi selecionada ou a foto existente foi alterada
+        try {
+          foto_url = await uploadImage(foto, user.id);
+        } catch (error: any) {
+          Alert.alert('Aviso', `Não foi possível fazer upload da nova foto: ${error.message}. O pet será salvo com a foto anterior ou sem foto.`);
+          foto_url = pet?.foto_url || null; // Reverter para a foto anterior ou null em caso de falha
+        }
+      } else if (!foto) { // Se a foto foi removida
+        foto_url = null;
+      }
+
+      const { error } = await supabase.from('Pet')
+        .update({
+          nome,
+          raca,
+          especie,
+          idade: parseInt(idade, 10),
+          sexo,
+          corPelagem,
+          castrado,
+          foto_url, // Atualizar a foto_url no banco de dados
+        })
+        .eq('id', id);
 
       if (error) throw error;
       Alert.alert('Sucesso', 'Pet atualizado com sucesso');
-      router.replace(`/pets/${id}`); // Voltar para a tela de detalhes
+      router.replace(`/pets/${id}`); // Volta para a tela de detalhes do pet
     } catch (error: any) {
       console.error('Erro ao atualizar pet:', error);
       Alert.alert('Erro', `Não foi possível atualizar o pet: ${error.message}`);
@@ -91,16 +210,9 @@ export default function EditPetScreen() {
 
   if (loading) {
     return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color={theme.colors.primary} />
-      </View>
-    );
-  }
-
-  if (!pet) {
-    return (
       <View style={styles.container}>
-        <Text>Pet não encontrado para edição.</Text>
+        <ActivityIndicator animating={true} color={theme.colors.primary} size="large" />
+        <Text>Carregando...</Text>
       </View>
     );
   }
@@ -117,6 +229,35 @@ export default function EditPetScreen() {
           <Text variant="headlineMedium" style={styles.title}>
             Editar Pet
           </Text>
+
+          <View style={styles.fotoContainer}>
+            {foto ? (
+              <Image source={{ uri: foto }} style={styles.foto} resizeMode="cover" />
+            ) : (
+              <View style={styles.fotoPlaceholder}>
+                <Text style={styles.fotoPlaceholderText}>Sem foto</Text>
+              </View>
+            )}
+            <Button
+              mode="outlined"
+              onPress={pickImage}
+              style={styles.fotoButton}
+              icon="camera"
+            >
+              {foto ? 'Alterar Foto' : 'Adicionar Foto'}
+            </Button>
+            {foto && (
+                <Button
+                    mode="text"
+                    onPress={() => setFoto(null)}
+                    style={{ marginTop: 8 }}
+                    textColor={theme.colors.error}
+                    icon="trash-can-outline"
+                >
+                    Remover Foto
+                </Button>
+            )}
+          </View>
 
           <TextInput
             label="Nome do Pet"
@@ -200,7 +341,7 @@ export default function EditPetScreen() {
             style={styles.button}
             icon="check"
           >
-            Atualizar Pet
+            Salvar Alterações
           </Button>
 
           <Button
@@ -220,6 +361,8 @@ export default function EditPetScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   background: {
     position: 'absolute',
@@ -228,18 +371,16 @@ const styles = StyleSheet.create({
     top: 0,
     bottom: 0,
   },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
   scrollContent: {
     padding: 16,
+    flexGrow: 1,
   },
   card: {
     padding: 24,
     borderRadius: 16,
     backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    width: '100%',
+    maxWidth: 600,
   },
   title: {
     color: theme.colors.primary,
@@ -272,5 +413,39 @@ const styles = StyleSheet.create({
    switchLabel: {
     fontSize: 16,
     color: theme.colors.onSurface,
-   }
-}); 
+   },
+   fotoContainer: {
+    alignItems: 'center',
+    marginBottom: 24,
+  },
+  foto: {
+    width: 150,
+    height: 150,
+    borderRadius: 75,
+    marginBottom: 8,
+  },
+  fotoPlaceholder: {
+    width: 150,
+    height: 150,
+    borderRadius: 75,
+    backgroundColor: theme.colors.surfaceVariant,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  fotoPlaceholderText: {
+    color: theme.colors.onSurfaceVariant,
+  },
+  fotoButton: {
+    marginTop: 8,
+  },
+});
+
+function decodeBase64(base64: string): Uint8Array {
+  const binaryString = atob(base64);
+  const bytes = new Uint8Array(binaryString.length);
+  for (let i = 0; i < binaryString.length; i++) {
+    bytes[i] = binaryString.charCodeAt(i);
+  }
+  return bytes;
+} 

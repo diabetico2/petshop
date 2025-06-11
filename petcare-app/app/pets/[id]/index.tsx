@@ -28,15 +28,23 @@ export default function PetDetailsScreen() {
 
       if (petError) throw petError;
       setPet(petData);
+      console.log('Foto URL fetched in PetDetailsScreen:', petData.foto_url);
 
       const { data: produtosData, error: produtosError } = await supabase
         .from('Produto')
         .select('*')
-        .eq('pet_id', id)
-        .order('data_compra', { ascending: false });
+        .eq('petid', id);
 
       if (produtosError) throw produtosError;
-      setProdutos(produtosData || []);
+
+      const sortedProdutos = (produtosData || []).sort((a, b) => {
+        if (a.tipo === 'medicinal' && b.tipo !== 'medicinal') return -1;
+        if (b.tipo === 'medicinal' && a.tipo !== 'medicinal') return 1;
+
+        return new Date(b.data_compra).getTime() - new Date(a.data_compra).getTime();
+      });
+
+      setProdutos(sortedProdutos);
     } catch (error) {
       console.error('Erro ao carregar dados:', error);
     } finally {
@@ -81,16 +89,29 @@ export default function PetDetailsScreen() {
     >
       <ScrollView style={styles.scrollView}>
         <Surface style={styles.header}>
-          <Image
-            source={{ uri: pet.foto_url || 'https://via.placeholder.com/150' }}
-            style={styles.petImage}
+          <LinearGradient
+            colors={['rgba(0,0,0,0.7)', 'rgba(0,0,0,0)']}
+            style={styles.headerGradient}
           />
-          <View style={styles.petInfo}>
-            <Text variant="headlineMedium" style={styles.petName}>{pet.nome}</Text>
-            <Text variant="bodyLarge" style={styles.petDetails}>
-              {pet.especie} • {pet.raca}
-            </Text>
-          </View>
+          {pet?.foto_url ? (
+            console.log('Rendering Image with URL:', pet.foto_url),
+            <Image
+              source={{ uri: pet.foto_url }}
+              style={styles.petImage}
+              resizeMode="cover"
+              onError={(e) => console.error('Erro ao carregar imagem do pet:', e.nativeEvent.error)}
+              onLoad={() => console.log('Imagem do pet carregada com sucesso!')}
+            />
+          ) : (
+            <View style={styles.petImagePlaceholder}>
+              <Text style={styles.petImagePlaceholderText}>
+                {pet?.nome?.charAt(0).toUpperCase()}
+              </Text>
+            </View>
+          )}
+          <Text variant="headlineLarge" style={styles.petName}>
+            {pet?.nome}
+          </Text>
         </Surface>
 
         <View style={styles.actions}>
@@ -136,7 +157,14 @@ export default function PetDetailsScreen() {
                       {new Date(produto.data_compra).toLocaleDateString()}
                     </Text>
                   </View>
+                  <Text variant="bodyMedium">Tipo: {produto.tipo.charAt(0).toUpperCase() + produto.tipo.slice(1)}</Text>
                   <Text variant="bodyMedium">R$ {produto.preco.toFixed(2)}</Text>
+                  {produto.tipo === 'medicinal' && (
+                    <View style={styles.medicinalDetails}>
+                      <Text variant="bodySmall">Quantidade: {produto.quantidade_vezes} vezes</Text>
+                      <Text variant="bodySmall">Consumo: {produto.quando_consumir}</Text>
+                    </View>
+                  )}
                   {produto.observacoes && (
                     <Text variant="bodySmall" style={styles.observacoes}>
                       {produto.observacoes}
@@ -160,27 +188,49 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   header: {
-    padding: 20,
-    margin: 16,
-    borderRadius: 12,
-    elevation: 4,
+    height: 200,
+    backgroundColor: theme.colors.primary,
+    justifyContent: 'center',
+    alignItems: 'center',
+    position: 'relative',
+  },
+  headerGradient: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    top: 0,
+    bottom: 0,
   },
   petImage: {
-    width: '100%',
-    height: 200,
-    borderRadius: 8,
-    marginBottom: 16,
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    marginBottom: 8,
+    borderWidth: 3,
+    borderColor: 'white',
   },
-  petInfo: {
+  petImagePlaceholder: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    backgroundColor: theme.colors.surfaceVariant,
+    justifyContent: 'center',
     alignItems: 'center',
+    marginBottom: 8,
+    borderWidth: 3,
+    borderColor: 'white',
+  },
+  petImagePlaceholderText: {
+    fontSize: 48,
+    color: theme.colors.onSurfaceVariant,
+    fontWeight: 'bold',
   },
   petName: {
+    color: 'white',
     fontWeight: 'bold',
-    marginBottom: 8,
-  },
-  petDetails: {
-    color: theme.colors.onSurfaceVariant,
-    marginBottom: 4,
+    textShadowColor: 'rgba(0, 0, 0, 0.75)',
+    textShadowOffset: { width: -1, height: 1 },
+    textShadowRadius: 10,
   },
   actions: {
     padding: 16,
@@ -219,5 +269,11 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     color: theme.colors.onSurfaceVariant,
     marginTop: 16,
+  },
+  medicinalDetails: {
+    marginTop: 4,
+    paddingLeft: 8,
+    borderLeftWidth: 2,
+    borderLeftColor: theme.colors.secondary,
   },
 }); 

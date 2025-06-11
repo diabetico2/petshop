@@ -64,14 +64,14 @@ export default function LoginScreen() {
 
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <Surface style={[styles.card, themeStyles.shadow]} elevation={2}>
-          <Text variant="headlineMedium" style={styles.title}>
+      <Text variant="headlineMedium" style={styles.title}>
             PetCare
           </Text>
 
           <Text variant="titleMedium" style={styles.subtitle}>
             Gerencie os cuidados do seu pet
-          </Text>
-
+      </Text>
+      
           <TextInput
             label="Email"
             value={email}
@@ -93,8 +93,8 @@ export default function LoginScreen() {
             left={<TextInput.Icon icon="lock" />}
           />
 
-          <Button
-            mode="contained"
+          <Button 
+            mode="contained" 
             onPress={handleLogin}
             loading={loading}
             disabled={loading}
@@ -104,7 +104,7 @@ export default function LoginScreen() {
             Entrar
           </Button>
 
-          <Button
+          <Button 
             mode="outlined"
             onPress={() => router.push('/register')}
             style={styles.button}

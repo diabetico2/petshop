@@ -9,10 +9,10 @@ function AppStack() {
   return (
     <Stack
       screenOptions={{
-        headerStyle: {
+            headerStyle: {
           backgroundColor: theme.colors.primary,
-        },
-        headerTintColor: '#fff',
+            },
+            headerTintColor: '#fff',
         headerTitleStyle: {
           fontWeight: 'bold',
         },
@@ -20,12 +20,12 @@ function AppStack() {
         contentStyle: {
           backgroundColor: 'transparent',
         },
-      }}
+          }}
     >
-      <Stack.Screen
-        name="pets/index"
-        options={{
-          title: 'Meus Pets',
+        <Stack.Screen 
+          name="pets/index" 
+          options={{
+            title: 'Meus Pets',
         }}
       />
       <Stack.Screen
@@ -44,15 +44,15 @@ function AppStack() {
         name="pets/[id]/edit"
         options={{
           title: 'Editar Pet',
-        }}
-      />
-      <Stack.Screen
+          }}
+        />
+        <Stack.Screen 
         name="pets/[id]/produtos/new"
-        options={{
+          options={{
           title: 'Novo Produto/Serviço',
-        }}
-      />
-    </Stack>
+          }}
+        />
+      </Stack>
   );
 }
 
@@ -78,7 +78,7 @@ export default function RootLayout() {
       </AuthProvider>
     </PaperProvider>
   );
-}
+} 
 
 function LayoutContent() {
   const { user } = useAuth();
