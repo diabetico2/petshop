@@ -9,7 +9,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 export default function NewProdutoScreen() {
   const { id: petId } = useLocalSearchParams();
   const [nome, setNome] = useState('');
-  const [tipo, setTipo] = useState<'alimenticio' | 'medicinal' | ''>('');
+  const [tipo, setTipo] = useState<'alimenticio' | 'medicinal' | 'higiene' | 'alimentacao' | 'brinquedo' | 'outros' | ''>('');
   const [preco, setPreco] = useState('');
   const [dia, setDia] = useState<string>('');
   const [mes, setMes] = useState<string>('');
@@ -180,17 +180,32 @@ export default function NewProdutoScreen() {
             <Text style={styles.segmentedButtonLabel}>Tipo:</Text>
             <SegmentedButtons
               value={tipo}
-              onValueChange={(value) => setTipo(value as 'alimenticio' | 'medicinal')}
+              onValueChange={(value) => setTipo(value as 'alimenticio' | 'medicinal' | 'higiene' | 'alimentacao' | 'brinquedo' | 'outros')}
               buttons={[
-                {
-                  value: 'alimenticio',
-                  label: 'Alimentício',
-                  icon: 'food-apple',
-                },
                 {
                   value: 'medicinal',
                   label: 'Medicinal',
-                  icon: 'pill',
+                  icon: 'medical-bag',
+                },
+                {
+                  value: 'higiene',
+                  label: 'Higiene',
+                  icon: 'shower',
+                },
+                {
+                  value: 'alimentacao',
+                  label: 'Alimentação',
+                  icon: 'food-apple',
+                },
+                {
+                  value: 'brinquedo',
+                  label: 'Brinquedo',
+                  icon: 'toy-brick',
+                },
+                {
+                  value: 'outros',
+                  label: 'Outros',
+                  icon: 'dots-horizontal',
                 },
               ]}
             />
