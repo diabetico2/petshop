@@ -52,6 +52,12 @@ function AppStack() {
           title: 'Novo Produto/Serviço',
           }}
         />
+        <Stack.Screen
+          name="pets/[id]/produtos/[produtoId]/edit"
+          options={{
+            title: 'Editar Produto/Serviço',
+          }}
+        />
       </Stack>
   );
 }

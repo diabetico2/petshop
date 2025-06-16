@@ -156,6 +156,11 @@ export default function PetDetailsScreen() {
                     <Text variant="bodyMedium">
                       {new Date(produto.data_compra).toLocaleDateString()}
                     </Text>
+                    <IconButton
+                      icon="pencil"
+                      size={20}
+                      onPress={() => router.push(`/pets/${id}/produtos/${produto.id}/edit`)}
+                    />
                   </View>
                   <Text variant="bodyMedium">Tipo: {produto.tipo.charAt(0).toUpperCase() + produto.tipo.slice(1)}</Text>
                   <Text variant="bodyMedium">R$ {produto.preco.toFixed(2)}</Text>
