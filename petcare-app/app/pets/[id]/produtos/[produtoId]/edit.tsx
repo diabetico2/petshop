@@ -203,45 +203,25 @@ export default function EditProdutoScreen() {
   };
 
   const handleDelete = async () => {
-    Alert.alert(
-      "Confirmar Exclusão",
-      "Tem certeza que deseja excluir este produto?",
-      [
-        {
-          text: "Cancelar",
-          style: "cancel",
-        },
-        {
-          text: "Excluir",
-          onPress: async () => {
-            try {
-              setLoading(true);
-              const { error } = await supabase
-                .from('Produto')
-                .delete()
-                .eq('id', produtoId);
+    console.log('Botão de deletar pressionado');
+    setLoading(true);
+    const { data, error } = await supabase
+      .from('Produto')
+      .delete()
+      .eq('id', produtoId);
 
-              if (error) {
-                console.error('Erro ao excluir produto:', error);
-                Alert.alert('Erro', 'Não foi possível excluir o produto. Tente novamente.');
-                setLoading(false);
-                return;
-              }
+    console.log('Supabase delete response:', { data, error });
 
-              Alert.alert('Sucesso', 'Produto excluído com sucesso!');
-              router.back();
-            } catch (error) {
-              console.error('Erro geral ao excluir produto:', error);
-              Alert.alert('Erro', 'Ocorreu um erro ao excluir o produto. Tente novamente.');
-            } finally {
-              setLoading(false);
-            }
-          },
-          style: "destructive",
-        },
-      ],
-      { cancelable: true }
-    );
+    if (error) {
+      console.error('Erro ao excluir produto:', error);
+      Alert.alert('Erro', 'Não foi possível excluir o produto. Tente novamente.\n' + error.message);
+      setLoading(false);
+      return;
+    }
+
+    Alert.alert('Sucesso', 'Produto excluído com sucesso!');
+    router.back();
+    setLoading(false);
   };
 
   if (loading) {
@@ -400,6 +380,7 @@ export default function EditProdutoScreen() {
             onPress={handleDelete}
             textColor={theme.colors.error}
             style={styles.deleteButton}
+            disabled={loading}
           >
             Excluir Produto
           </Button>
@@ -542,3 +523,4 @@ const styles = StyleSheet.create({
     marginTop: 20,
   },
 });
+ 
