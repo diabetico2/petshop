@@ -1,11 +1,12 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { View, StyleSheet, ScrollView, Image, TouchableOpacity } from 'react-native';
 import { Text, Card, Button, IconButton, Divider, Surface } from 'react-native-paper';
-import { useLocalSearchParams, useRouter } from 'expo-router';
-import { supabase } from '../../../lib/supabase';
+import { useLocalSearchParams, useRouter, useFocusEffect } from 'expo-router';
+import { api } from '../../../lib/api';
 import { Pet, Produto } from '../../../types';
 import { LinearGradient } from 'expo-linear-gradient';
 import { theme } from '../../../theme';
+import { useAuth } from '../../../contexts/AuthContext';
 
 export default function PetDetailsScreen() {
   const { id } = useLocalSearchParams();
@@ -13,37 +14,29 @@ export default function PetDetailsScreen() {
   const [pet, setPet] = useState<Pet | null>(null);
   const [produtos, setProdutos] = useState<Produto[]>([]);
   const [loading, setLoading] = useState(true);
+  const { user } = useAuth();
 
-  useEffect(() => {
-    loadPet();
-  }, [id]);
+  useFocusEffect(
+    React.useCallback(() => {
+      loadPet();
+    }, [id])
+  );
 
   const loadPet = async () => {
     try {
-      const { data: petData, error: petError } = await supabase
-        .from('Pet')
-        .select('*')
-        .eq('id', id)
-        .single();
-
-      if (petError) throw petError;
+      // Buscar pet pelo backend
+      const response = await fetch(`http://localhost:3000/pets/${id}`);
+      if (!response.ok) throw new Error('Erro ao buscar pet');
+      const petData = await response.json();
       setPet(petData);
-      console.log('Foto URL fetched in PetDetailsScreen:', petData.foto_url);
-
-      const { data: produtosData, error: produtosError } = await supabase
-        .from('Produto')
-        .select('*')
-        .eq('petid', id);
-
-      if (produtosError) throw produtosError;
-
-      const sortedProdutos = (produtosData || []).sort((a, b) => {
+      // Buscar produtos pelo backend
+      const produtos = await api.getProducts();
+      const petProdutos = produtos.filter(p => String(p.petId) === String(id));
+      const sortedProdutos = petProdutos.sort((a, b) => {
         if (a.tipo === 'medicinal' && b.tipo !== 'medicinal') return -1;
         if (b.tipo === 'medicinal' && a.tipo !== 'medicinal') return 1;
-
         return new Date(b.data_compra).getTime() - new Date(a.data_compra).getTime();
       });
-
       setProdutos(sortedProdutos);
     } catch (error) {
       console.error('Erro ao carregar dados:', error);
@@ -54,12 +47,10 @@ export default function PetDetailsScreen() {
 
   const handleDelete = async () => {
     try {
-      const { error } = await supabase
-        .from('Pet')
-        .delete()
-        .eq('id', id);
-
-      if (error) throw error;
+      const response = await fetch(`http://localhost:3000/pets/${id}`, {
+        method: 'DELETE',
+      });
+      if (!response.ok) throw new Error('Erro ao deletar pet');
       router.back();
     } catch (error) {
       console.error('Erro ao deletar pet:', error);
@@ -112,7 +103,45 @@ export default function PetDetailsScreen() {
           <Text variant="headlineLarge" style={styles.petName}>
             {pet?.nome}
           </Text>
+          {user?.nome && (
+            <Text variant="bodyMedium" style={styles.userNameText}>
+              Dono: {user.nome}
+            </Text>
+          )}
         </Surface>
+
+        {/* Detalhes do Pet em linha */}
+        <View
+          style={{
+            padding: 20,
+            backgroundColor: 'white',
+            borderRadius: 16,
+            marginTop: -60, 
+            marginBottom: 16,
+            marginHorizontal: 16,
+            alignSelf: 'stretch',
+            elevation: 3,
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: 0.1,
+            shadowRadius: 4,
+          }}
+        >
+          <Text variant="titleLarge" style={{ marginBottom: 12, fontWeight: 'bold' }}>
+            Informações do Pet
+          </Text>
+          <Text>
+            {[
+              pet?.nome,
+              pet?.especie,
+              pet?.raca,
+              pet?.corPelagem,
+              pet?.idade ? `${pet.idade} ${pet.idade === 1 ? 'ano' : 'anos'}` : null,
+              pet?.sexo,
+              pet?.castrado ? 'castrado' : 'não castrado'
+            ].filter(Boolean).join(', ')}
+          </Text>
+        </View>
 
         <View style={styles.actions}>
           <Button
@@ -248,37 +277,47 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   deleteButton: {
-    borderColor: theme.colors.error,
+    marginBottom: 8,
   },
   section: {
     padding: 16,
   },
   sectionTitle: {
-    marginBottom: 16,
+    marginBottom: 12,
     fontWeight: 'bold',
+  },
+  emptyText: {
+    textAlign: 'center',
+    color: theme.colors.outline,
+    marginTop: 20,
   },
   produtoCard: {
     marginBottom: 12,
+    borderRadius: 8,
+    elevation: 2,
   },
   produtoHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: 4,
+  },
+  medicinalDetails: {
+    marginTop: 8,
+    paddingLeft: 8,
+    borderLeftWidth: 2,
+    borderLeftColor: theme.colors.outline,
   },
   observacoes: {
     marginTop: 8,
+    fontStyle: 'italic',
     color: theme.colors.onSurfaceVariant,
   },
-  emptyText: {
-    textAlign: 'center',
-    color: theme.colors.onSurfaceVariant,
-    marginTop: 16,
-  },
-  medicinalDetails: {
+  userNameText: {
+    color: 'white',
     marginTop: 4,
-    paddingLeft: 8,
-    borderLeftWidth: 2,
-    borderLeftColor: theme.colors.secondary,
+    textShadowColor: 'rgba(0, 0, 0, 0.5)',
+    textShadowOffset: { width: -1, height: 1 },
+    textShadowRadius: 5,
   },
 }); 

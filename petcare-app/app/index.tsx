@@ -2,14 +2,15 @@ import React, { useState } from 'react';
 import { View, StyleSheet, Alert, ScrollView } from 'react-native';
 import { Text, TextInput, Button, ActivityIndicator, Surface } from 'react-native-paper';
 import { router } from 'expo-router';
-import { supabase } from '../lib/supabase';
 import { styles as themeStyles, theme } from '../theme';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useAuth } from '../contexts/AuthContext';
 
 export default function LoginScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const { signIn, signOut } = useAuth();
 
   async function handleLogin() {
     if (!email || !password) {
@@ -29,21 +30,8 @@ export default function LoginScreen() {
 
     try {
       setLoading(true);
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email: email.trim(),
-        password: password.trim(),
-      });
-
-      if (error) {
-        console.error('Login error:', error);
-        throw error;
-      }
-
-      if (data?.user) {
-        router.replace('/pets');
-      } else {
-        throw new Error('Usuário não encontrado');
-      }
+      await signIn(email, password);
+      router.replace('/pets');
     } catch (error: any) {
       console.error('Login error details:', error);
       Alert.alert(

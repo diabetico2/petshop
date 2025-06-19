@@ -3,7 +3,7 @@ import {
   Get,
   Post,
   Body,
-  Patch,
+  Put,
   Param,
   Delete,
   NotFoundException
@@ -23,34 +23,33 @@ export class ProdutoController {
   }
 
   @Get()
-  async listarProdutos(): Promise<Produto[]> {
-    return this.produtoService.listarProdutos();
+  async listarProdutos(): Promise<any[]> {
+    const produtos = await this.produtoService.listarProdutos();
+    return produtos.map(p => ({
+      ...p,
+      petId: p.petid,
+    }));
   }
 
   @Get(':id')
   async encontrarProduto(@Param('id') id: string): Promise<Produto> {
-    const produto = await this.produtoService.encontrarProduto(+id);
+    const produto = await this.produtoService.encontrarProduto(id);
     if (!produto) {
       throw new NotFoundException('Produto não encontrado');
     }
     return produto;
   }
 
-  @Get(':id/pet')
-  async encontrarPetProduto(@Param('id') id: string) {
-    return this.produtoService.encontrarPetProduto(+id);
-  }
-
-  @Patch(':id')
+  @Put(':id')
   async atualizarProduto(
     @Param('id') id: string,
     @Body() dados: UpdateProdutoDto
   ): Promise<Produto> {
-    return this.produtoService.atualizarProduto(+id, dados);
+    return this.produtoService.atualizarProduto(id, dados);
   }
 
   @Delete(':id')
   async excluirProduto(@Param('id') id: string) {
-    return this.produtoService.excluirProduto(+id);
+    return this.produtoService.excluirProduto(id);
   }
 }

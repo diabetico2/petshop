@@ -2,11 +2,10 @@ import React, { useState } from 'react';
 import { View, StyleSheet, Alert, ScrollView, Image, Platform } from 'react-native';
 import { Text, TextInput, Button, ActivityIndicator, Surface, SegmentedButtons, Switch } from 'react-native-paper';
 import { router } from 'expo-router';
-import { supabase } from '../../lib/supabase';
 import { styles as themeStyles, theme } from '../../theme';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useAuth } from '../../contexts/AuthContext';
 import * as ImagePicker from 'expo-image-picker';
-import * as FileSystem from 'expo-file-system';
 
 export default function NewPetScreen() {
   const [nome, setNome] = useState('');
@@ -18,153 +17,162 @@ export default function NewPetScreen() {
   const [castrado, setCastrado] = useState(false);
   const [loading, setLoading] = useState(false);
   const [foto, setFoto] = useState<string | null>(null);
+  const [foto_url, setFotoUrl] = useState<string | null>(null);
+  const { user } = useAuth();
 
-  async function pickImage() {
-    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    
-    if (status !== 'granted') {
-      Alert.alert('Erro', 'Precisamos de permissão para acessar suas fotos');
-      return;
-    }
+  // Função para validar se o texto contém apenas números
+  const handleIdadeChange = (text: string) => {
+    // Remove todos os caracteres que não são números
+    const numericValue = text.replace(/[^0-9]/g, '');
+    setIdade(numericValue);
+  };
 
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      aspect: [1, 1],
-      quality: 0.5,
-    });
-
-    if (!result.canceled) {
-      setFoto(result.assets[0].uri);
-    }
-  }
-
-  const uploadImage = async (uri: string, userId: string) => {
+  // Função para selecionar imagem
+  const pickImage = async () => {
     try {
-      let dataToUpload: Blob | Uint8Array;
-      let mimeType: string;
-      let fileExtension: string | undefined;
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      
+      if (status !== 'granted') {
+        Alert.alert('Erro', 'Precisamos de permissão para acessar suas fotos');
+        return;
+      }
 
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.8,
+      });
+
+      if (!result.canceled) {
+        setFoto(result.assets[0].uri);
+      }
+    } catch (error) {
+      console.error('Erro ao selecionar imagem:', error);
+      Alert.alert('Erro', 'Não foi possível selecionar a imagem');
+    }
+  };
+
+  // Função para fazer upload da imagem
+  const uploadImage = async (uri: string): Promise<string> => {
+    try {
+      console.log('Iniciando upload da imagem...');
+      
+      // Criar FormData para enviar o arquivo
+      const formData = new FormData();
+      
+      // Para web, converter base64 para blob
       if (Platform.OS === 'web') {
-        const matches = uri.match(/^data:(.*?);base64,(.*)$/);
-        if (!matches || matches.length < 3) {
-          throw new Error('URI de imagem inválida ou formato inesperado.');
-        }
-        mimeType = matches[1].toLowerCase();
-        const base64Data = matches[2];
-
-        const decodedBytes = decodeBase64(base64Data);
-        dataToUpload = decodedBytes;
-        fileExtension = mimeType.split('/').pop();
+        const response = await fetch(uri);
+        const blob = await response.blob();
+        formData.append('image', blob, 'pet-photo.jpg');
       } else {
-        // Determine mimeType based on uri extension
-        fileExtension = uri.split('.').pop()?.toLowerCase();
-        mimeType = 'application/octet-stream'; // Default
-        if (fileExtension === 'jpg' || fileExtension === 'jpeg') {
-          mimeType = 'image/jpeg';
-        } else if (fileExtension === 'png') {
-          mimeType = 'image/png';
-        } else if (fileExtension === 'gif') {
-          mimeType = 'image/gif';
-        }
-
-        const base64 = await FileSystem.readAsStringAsync(uri, { encoding: FileSystem.EncodingType.Base64 });
-        const decodedBytes = decodeBase64(base64);
-        dataToUpload = new Blob([decodedBytes], { type: mimeType });
+        // Para mobile, usar o URI diretamente
+        formData.append('image', {
+          uri: uri,
+          type: 'image/jpeg',
+          name: 'pet-photo.jpg',
+        } as any);
       }
+
+      const uploadResponse = await fetch('http://localhost:3000/upload', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
+        },
+        body: formData,
+      });
+
+      if (!uploadResponse.ok) {
+        const errorData = await uploadResponse.json();
+        throw new Error(errorData.message || 'Erro no upload da imagem');
+      }
+
+      const uploadResult = await uploadResponse.json();
+      console.log('Upload concluído:', uploadResult);
       
-      console.log('URI da imagem:', uri);
-      console.log('Tipo MIME do Blob (inferido): ', mimeType);
-      console.log('Tamanho do dado para upload (bytes):', dataToUpload instanceof Blob ? dataToUpload.size : dataToUpload.byteLength);
-
-      // Validar o tipo MIME da imagem
-      if (!['image/jpeg', 'image/png', 'image/gif'].includes(mimeType)) {
-        throw new Error('Formato de imagem não suportado. Use JPG, PNG ou GIF.');
-      }
-
-      if (!fileExtension) {
-        throw new Error('Não foi possível determinar a extensão do arquivo.');
-      }
-
-      const filename = `pet-${Date.now()}.${fileExtension}`;
-      const filePath = `${userId}/${filename}`;
-
-      const { error: uploadError } = await supabase.storage
-        .from('pets')
-        .upload(filePath, dataToUpload, {
-          contentType: mimeType
-        });
-
-      if (uploadError) {
-        throw uploadError;
-      }
-
-      const { data: { publicUrl } } = supabase.storage
-        .from('pets')
-        .getPublicUrl(filePath);
-      
-      console.log('URL Pública da Imagem no Supabase:', publicUrl);
-
-      return publicUrl;
-    } catch (error: any) {
-      console.error('Erro detalhado ao fazer upload da imagem:', error);
+      return uploadResult.url;
+    } catch (error) {
+      console.error('Erro no upload:', error);
       throw error;
     }
   };
 
   async function handleSubmit() {
+    console.log('handleSubmit chamado');
+    console.log('Valores dos campos:', { nome, raca, especie, idade, sexo, corPelagem, castrado });
+    console.log('Usuário:', user);
+    
     if (!nome || !raca || !especie || !idade || !sexo || !corPelagem) {
+      console.log('Campos obrigatórios não preenchidos');
       Alert.alert('Erro', 'Por favor, preencha todos os campos');
       return;
     }
 
-    if (isNaN(Number(idade))) {
+    if (isNaN(Number(idade)) || Number(idade) <= 0) {
+      console.log('Idade inválida:', idade);
       Alert.alert('Erro', 'Por favor, insira uma idade válida.');
       return;
     }
 
-    let foto_url: string | null = null;
+    if (!user) {
+      console.log('Usuário não autenticado');
+      Alert.alert('Erro', 'Usuário não autenticado');
+      return;
+    }
 
     try {
       setLoading(true);
-      const { data: { user } } = await supabase.auth.getUser();
+      console.log('Iniciando processo de adicionar pet...');
+      console.log('User ID:', user.id);
 
-      if (!user) {
-        console.error('Erro: Usuário não autenticado no handleSubmit.');
-        throw new Error('Usuário não autenticado');
-      }
-      console.log('User ID para upload:', user.id);
-      console.log('Valor atual do estado foto (antes do upload): ', foto);
-
+      // Upload da imagem se foi selecionada
+      let foto_url_final = null;
       if (foto) {
         try {
-          foto_url = await uploadImage(foto, user.id);
-          setFoto(foto_url);
+          console.log('Fazendo upload da foto...');
+          foto_url_final = await uploadImage(foto);
+          console.log('Upload da foto concluído:', foto_url_final);
         } catch (error: any) {
+          console.log('Erro no upload da foto:', error);
           Alert.alert('Aviso', `Não foi possível fazer upload da foto: ${error.message}. O pet será cadastrado sem foto.`);
         }
       }
 
-      const { error } = await supabase.from('Pet').insert({
-        nome,
-        raca,
-        especie,
-        idade: parseInt(idade, 10),
-        sexo,
-        corPelagem,
-        castrado,
-        user_id: user.id,
-        foto_url,
+      console.log('Fazendo requisição para adicionar pet...');
+      const response = await fetch('http://localhost:3000/pets', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('access_token')}`
+        },
+        body: JSON.stringify({
+          nome,
+          raca,
+          especie,
+          idade: parseInt(idade, 10),
+          sexo,
+          corPelagem,
+          castrado,
+          user_id: user.id,
+          foto_url: foto_url_final,
+        }),
       });
 
-      if (error) throw error;
+      console.log('Resposta do servidor:', response.status, response.statusText);
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.log('Erro do servidor:', errorData);
+        throw new Error(errorData.message || 'Erro ao adicionar pet');
+      }
+
+      const result = await response.json();
+      console.log('Pet adicionado com sucesso:', result);
       Alert.alert('Sucesso', 'Pet adicionado com sucesso');
       router.replace('/pets');
     } catch (error: any) {
       console.error('Erro ao adicionar pet:', error);
-      if (!foto_url && foto) {
-        console.error('Foto não foi carregada e foto_url é null, mas a foto estava presente no estado.');
-      }
       Alert.alert('Erro', `Não foi possível adicionar o pet: ${error.message}`);
     } finally {
       setLoading(false);
@@ -184,6 +192,7 @@ export default function NewPetScreen() {
             Novo Pet
           </Text>
 
+          {/* Seção de Foto */}
           <View style={styles.fotoContainer}>
             {foto ? (
               <Image source={{ uri: foto }} style={styles.foto} />
@@ -200,6 +209,17 @@ export default function NewPetScreen() {
             >
               {foto ? 'Alterar Foto' : 'Adicionar Foto'}
             </Button>
+            {foto && (
+              <Button
+                mode="text"
+                onPress={() => setFoto(null)}
+                style={styles.removeFotoButton}
+                textColor={theme.colors.error}
+                icon="trash-can-outline"
+              >
+                Remover Foto
+              </Button>
+            )}
           </View>
 
           <TextInput
@@ -232,10 +252,10 @@ export default function NewPetScreen() {
           <TextInput
             label="Idade"
             value={idade}
-            onChangeText={setIdade}
+            onChangeText={handleIdadeChange}
             mode="outlined"
             style={styles.input}
-            keyboardType="number-pad"
+            keyboardType="numeric"
             left={<TextInput.Icon icon="numeric" />}
           />
 
@@ -348,11 +368,11 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     paddingHorizontal: 12,
   },
-   switchLabel: {
+  switchLabel: {
     fontSize: 16,
     color: theme.colors.onSurface,
-   },
-   fotoContainer: {
+  },
+  fotoContainer: {
     alignItems: 'center',
     marginBottom: 24,
   },
@@ -377,13 +397,7 @@ const styles = StyleSheet.create({
   fotoButton: {
     marginTop: 8,
   },
-});
-
-function decodeBase64(base64: string): Uint8Array {
-  const binaryString = atob(base64);
-  const bytes = new Uint8Array(binaryString.length);
-  for (let i = 0; i < binaryString.length; i++) {
-    bytes[i] = binaryString.charCodeAt(i);
-  }
-  return bytes;
-} 
+  removeFotoButton: {
+    marginTop: 4,
+  },
+}); 

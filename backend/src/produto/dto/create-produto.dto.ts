@@ -1,12 +1,16 @@
-import { IsNotEmpty, IsNumber, IsString, Min, IsOptional } from 'class-validator';
+import { IsNotEmpty, IsNumber, IsString, Min, IsOptional, IsEnum } from 'class-validator';
 
 export class CreateProdutoDto {
     @IsNotEmpty()
     @IsString()
     nome: string;
 
-    @IsNotEmpty()
+    @IsOptional()
     @IsString()
+    descricao?: string;
+
+    @IsNotEmpty()
+    @IsEnum(['alimenticio', 'medicinal', 'higiene', 'alimentacao', 'brinquedo', 'outros'])
     tipo: string;
 
     @IsNotEmpty()
@@ -15,6 +19,26 @@ export class CreateProdutoDto {
     preco: number;
 
     @IsOptional()
+    @IsString()
+    imagem?: string;
+
+    @IsNotEmpty()
+    @IsString()
+    petId: string;
+
+    @IsNotEmpty()
+    @IsString()
+    data_compra: string;
+
+    @IsOptional()
+    @IsString()
+    observacoes?: string;
+
+    @IsOptional()
     @IsNumber()
-    petId?: number;
+    quantidade_vezes?: number;
+
+    @IsOptional()
+    @IsString()
+    quando_consumir?: string;
 }

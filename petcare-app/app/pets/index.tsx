@@ -1,45 +1,38 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { View, StyleSheet, FlatList, Alert, Image } from 'react-native';
 import { Text, Card, Button, ActivityIndicator, FAB, Surface } from 'react-native-paper';
 import { useAuth } from '../../contexts/AuthContext';
-import { supabase } from '../../lib/supabase';
+import { api } from '../../lib/api';
 import { Pet } from '../../types';
 import { router } from 'expo-router';
 import { styles as themeStyles, theme } from '../../theme';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useFocusEffect } from 'expo-router';
 
 export default function PetsScreen() {
   const [pets, setPets] = useState<Pet[]>([]);
   const [loading, setLoading] = useState(true);
-  const { user, loading: authLoading } = useAuth();
+  const { user, loading: authLoading, signOut } = useAuth();
 
-  useEffect(() => {
-    console.log('useEffect in PetsScreen triggered. authLoading:', authLoading, 'user:', user);
-    if (!authLoading && user) {
-      loadPets();
-    } else if (!authLoading && !user) {
-      setPets([]);
-      setLoading(false);
-    }
-  }, [user, authLoading]);
+  useFocusEffect(
+    React.useCallback(() => {
+      if (!authLoading && user) {
+        loadPets();
+      } else if (!authLoading && !user) {
+        setPets([]);
+        setLoading(false);
+      }
+    }, [user, authLoading])
+  );
 
   async function loadPets() {
     try {
       setLoading(true);
-      console.log('Attempting to load pets for user ID:', user?.id);
-      const { data, error } = await supabase
-        .from('Pet')
-        .select('id, nome, raca, especie, idade, sexo, corPelagem, castrado, user_id, created_at, foto_url')
-        .eq('user_id', user?.id);
-
-      if (error) {
-        console.error('Supabase error loading pets:', error);
-        throw error;
-      }
-      console.log('Supabase data received:', data);
+      const response = await fetch(`http://localhost:3000/pets?userId=${user?.id}`);
+      if (!response.ok) throw new Error('Erro ao buscar pets');
+      const data = await response.json();
       setPets(data || []);
-    } catch (error: any) {
-      console.error('Erro ao carregar pets:', error);
+    } catch (error) {
       Alert.alert('Erro', `Não foi possível carregar os pets: ${error.message}`);
     } finally {
       setLoading(false);
@@ -61,12 +54,10 @@ export default function PetsScreen() {
           onPress: async () => {
             try {
               setLoading(true);
-              const { error } = await supabase
-                .from('Pet')
-                .delete()
-                .eq('id', petId);
-
-              if (error) throw error;
+              const response = await fetch(`http://localhost:3000/pets/${petId}`, {
+                method: 'DELETE',
+              });
+              if (!response.ok) throw new Error('Erro ao remover o pet');
               await loadPets();
               Alert.alert('Sucesso', 'Pet removido com sucesso');
             } catch (error) {
@@ -75,7 +66,7 @@ export default function PetsScreen() {
               setLoading(false);
             }
           },
-    },
+        },
       ]
     );
   }
@@ -120,7 +111,7 @@ export default function PetsScreen() {
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color={theme.colors.primary} />
       </View>
-  );
+    );
   }
 
   return (
@@ -130,8 +121,8 @@ export default function PetsScreen() {
         style={styles.background}
       />
 
-      <View style={styles.header}>
-        <View>
+      <View style={styles.headerRow}>
+        <View style={styles.header}>
           <Text variant="headlineMedium" style={styles.welcomeText}>
             Olá, {user?.nome}!
           </Text>
@@ -139,6 +130,17 @@ export default function PetsScreen() {
             Gerencie seus pets aqui
           </Text>
         </View>
+        <Button
+          mode="outlined"
+          onPress={async () => {
+            await signOut();
+            router.replace('/');
+          }}
+          style={styles.logoutButton}
+          icon="logout"
+        >
+          Sair
+        </Button>
       </View>
 
       <FlatList
@@ -267,5 +269,16 @@ const styles = StyleSheet.create({
   },
   emptyButton: {
     marginTop: 8,
+  },
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 16,
+    paddingTop: 8,
+  },
+  logoutButton: {
+    marginLeft: 8,
+    alignSelf: 'flex-start',
   },
 }); 

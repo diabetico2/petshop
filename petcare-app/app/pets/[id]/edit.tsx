@@ -2,16 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, Alert, ScrollView, Image, Platform } from 'react-native';
 import { Text, TextInput, Button, ActivityIndicator, Surface, SegmentedButtons, Switch } from 'react-native-paper';
 import { router, useLocalSearchParams } from 'expo-router';
-import { supabase } from '../../../lib/supabase';
 import { styles as themeStyles, theme } from '../../../theme';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useAuth } from '../../../contexts/AuthContext';
 import * as ImagePicker from 'expo-image-picker';
-import * as FileSystem from 'expo-file-system';
-import { Pet } from '../../../types';
 
 export default function EditPetScreen() {
   const { id } = useLocalSearchParams();
-  const [pet, setPet] = useState<Pet | null>(null);
   const [nome, setNome] = useState('');
   const [raca, setRaca] = useState('');
   const [especie, setEspecie] = useState('');
@@ -19,8 +16,88 @@ export default function EditPetScreen() {
   const [sexo, setSexo] = useState('');
   const [corPelagem, setCorPelagem] = useState('');
   const [castrado, setCastrado] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [foto, setFoto] = useState<string | null>(null);
+  const [foto_url, setFotoUrl] = useState<string | null>(null);
+  const { user } = useAuth();
+
+  // Função para validar se o texto contém apenas números
+  const handleIdadeChange = (text: string) => {
+    // Remove todos os caracteres que não são números
+    const numericValue = text.replace(/[^0-9]/g, '');
+    setIdade(numericValue);
+  };
+
+  // Função para selecionar imagem
+  const pickImage = async () => {
+    try {
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      
+      if (status !== 'granted') {
+        Alert.alert('Erro', 'Precisamos de permissão para acessar suas fotos');
+        return;
+      }
+
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.8,
+      });
+
+      if (!result.canceled) {
+        setFoto(result.assets[0].uri);
+      }
+    } catch (error) {
+      console.error('Erro ao selecionar imagem:', error);
+      Alert.alert('Erro', 'Não foi possível selecionar a imagem');
+    }
+  };
+
+  // Função para fazer upload da imagem
+  const uploadImage = async (uri: string): Promise<string> => {
+    try {
+      console.log('Iniciando upload da imagem...');
+      
+      // Criar FormData para enviar o arquivo
+      const formData = new FormData();
+      
+      // Para web, converter base64 para blob
+      if (Platform.OS === 'web') {
+        const response = await fetch(uri);
+        const blob = await response.blob();
+        formData.append('image', blob, 'pet-photo.jpg');
+      } else {
+        // Para mobile, usar o URI diretamente
+        formData.append('image', {
+          uri: uri,
+          type: 'image/jpeg',
+          name: 'pet-photo.jpg',
+        } as any);
+      }
+
+      const uploadResponse = await fetch('http://localhost:3000/upload', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
+        },
+        body: formData,
+      });
+
+      if (!uploadResponse.ok) {
+        const errorData = await uploadResponse.json();
+        throw new Error(errorData.message || 'Erro no upload da imagem');
+      }
+
+      const uploadResult = await uploadResponse.json();
+      console.log('Upload concluído:', uploadResult);
+      
+      return uploadResult.url;
+    } catch (error) {
+      console.error('Erro no upload:', error);
+      throw error;
+    }
+  };
 
   useEffect(() => {
     if (id) {
@@ -31,126 +108,25 @@ export default function EditPetScreen() {
   async function loadPet() {
     try {
       setLoading(true);
-      const { data, error } = await supabase
-        .from('Pet')
-        .select('*')
-        .eq('id', id)
-        .single();
+      const response = await fetch(`http://localhost:3000/pets/${id}`);
+      if (!response.ok) throw new Error('Erro ao carregar pet');
+      const pet = await response.json();
 
-      if (error) {
-        throw error;
-      }
-
-      if (data) {
-        setPet(data);
-        setNome(data.nome);
-        setRaca(data.raca);
-        setEspecie(data.especie);
-        setIdade(String(data.idade));
-        setSexo(data.sexo);
-        setCorPelagem(data.corPelagem);
-        setCastrado(data.castrado);
-        setFoto(data.foto_url); // Carrega a foto existente
-      }
-    } catch (error: any) {
-      console.error('Erro ao carregar dados do pet:', error);
-      Alert.alert('Erro', 'Não foi possível carregar os dados do pet.');
-      router.back();
+      setNome(pet.nome || '');
+      setRaca(pet.raca || '');
+      setEspecie(pet.especie || '');
+      setIdade(pet.idade?.toString() || '');
+      setSexo(pet.sexo || '');
+      setCorPelagem(pet.corPelagem || '');
+      setCastrado(pet.castrado || false);
+      setFotoUrl(pet.foto_url || null);
+    } catch (error) {
+      console.error('Erro ao carregar pet:', error);
+      Alert.alert('Erro', 'Não foi possível carregar os dados do pet');
     } finally {
       setLoading(false);
     }
   }
-
-  async function pickImage() {
-    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    
-    if (status !== 'granted') {
-      Alert.alert('Erro', 'Precisamos de permissão para acessar suas fotos');
-      return;
-    }
-
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      aspect: [1, 1],
-      quality: 0.5,
-    });
-
-    if (!result.canceled) {
-      setFoto(result.assets[0].uri);
-    }
-  }
-
-  const uploadImage = async (uri: string, userId: string) => {
-    try {
-      let dataToUpload: Blob | Uint8Array;
-      let mimeType: string;
-      let fileExtension: string | undefined;
-
-      if (Platform.OS === 'web') {
-        const matches = uri.match(/^data:(.*?);base64,(.*)$/);
-        if (!matches || matches.length < 3) {
-          throw new Error('URI de imagem inválida ou formato inesperado.');
-        }
-        mimeType = matches[1].toLowerCase();
-        const base64Data = matches[2];
-
-        const decodedBytes = decodeBase64(base64Data);
-        dataToUpload = decodedBytes;
-        fileExtension = mimeType.split('/').pop();
-      } else {
-        fileExtension = uri.split('.').pop()?.toLowerCase();
-        mimeType = 'application/octet-stream'; 
-        if (fileExtension === 'jpg' || fileExtension === 'jpeg') {
-          mimeType = 'image/jpeg';
-        } else if (fileExtension === 'png') {
-          mimeType = 'image/png';
-        } else if (fileExtension === 'gif') {
-          mimeType = 'image/gif';
-        }
-
-        const base64 = await FileSystem.readAsStringAsync(uri, { encoding: FileSystem.EncodingType.Base64 });
-        const decodedBytes = decodeBase64(base64);
-        dataToUpload = new Blob([decodedBytes], { type: mimeType });
-      }
-      
-      console.log('URI da imagem:', uri);
-      console.log('Tipo MIME do Blob (inferido): ', mimeType);
-      console.log('Tamanho do dado para upload (bytes):', dataToUpload instanceof Blob ? dataToUpload.size : dataToUpload.byteLength);
-
-      if (!['image/jpeg', 'image/png', 'image/gif'].includes(mimeType)) {
-        throw new Error('Formato de imagem não suportado. Use JPG, PNG ou GIF.');
-      }
-
-      if (!fileExtension) {
-        throw new Error('Não foi possível determinar a extensão do arquivo.');
-      }
-
-      const filename = `pet-${Date.now()}.${fileExtension}`;
-      const filePath = `${userId}/${filename}`;
-
-      const { error: uploadError } = await supabase.storage
-        .from('pets')
-        .upload(filePath, dataToUpload, {
-          contentType: mimeType
-        });
-
-      if (uploadError) {
-        throw uploadError;
-      }
-
-      const { data: { publicUrl } } = supabase.storage
-        .from('pets')
-        .getPublicUrl(filePath);
-      
-      console.log('URL Pública da Imagem no Supabase:', publicUrl);
-
-      return publicUrl;
-    } catch (error: any) {
-      console.error('Erro detalhado ao fazer upload da imagem:', error);
-      throw error;
-    }
-  };
 
   async function handleSubmit() {
     if (!nome || !raca || !especie || !idade || !sexo || !corPelagem) {
@@ -158,34 +134,40 @@ export default function EditPetScreen() {
       return;
     }
 
-    if (isNaN(Number(idade))) {
+    if (isNaN(Number(idade)) || Number(idade) <= 0) {
       Alert.alert('Erro', 'Por favor, insira uma idade válida.');
+      return;
+    }
+
+    if (!user) {
+      Alert.alert('Erro', 'Usuário não autenticado');
       return;
     }
 
     try {
       setLoading(true);
-      const { data: { user } } = await supabase.auth.getUser();
 
-      if (!user) {
-        console.error('Erro: Usuário não autenticado no handleSubmit.');
-        throw new Error('Usuário não autenticado');
-      }
-
-      let foto_url = pet?.foto_url || null; // Manter a foto_url existente por padrão
-      if (foto && foto !== pet?.foto_url) { // Se uma nova foto foi selecionada ou a foto existente foi alterada
+      // Upload da nova imagem se foi selecionada
+      let foto_url_final = foto_url; // Manter a foto existente por padrão
+      if (foto && foto !== foto_url) {
         try {
-          foto_url = await uploadImage(foto, user.id);
+          console.log('Fazendo upload da nova foto...');
+          foto_url_final = await uploadImage(foto);
+          console.log('Upload da nova foto concluído:', foto_url_final);
         } catch (error: any) {
-          Alert.alert('Aviso', `Não foi possível fazer upload da nova foto: ${error.message}. O pet será salvo com a foto anterior ou sem foto.`);
-          foto_url = pet?.foto_url || null; // Reverter para a foto anterior ou null em caso de falha
+          console.log('Erro no upload da nova foto:', error);
+          Alert.alert('Aviso', `Não foi possível fazer upload da nova foto: ${error.message}. O pet será salvo com a foto anterior.`);
+          foto_url_final = foto_url; // Manter a foto anterior
         }
-      } else if (!foto) { // Se a foto foi removida
-        foto_url = null;
       }
 
-      const { error } = await supabase.from('Pet')
-        .update({
+      const response = await fetch(`http://localhost:3000/pets/${id}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('access_token')}`
+        },
+        body: JSON.stringify({
           nome,
           raca,
           especie,
@@ -193,13 +175,17 @@ export default function EditPetScreen() {
           sexo,
           corPelagem,
           castrado,
-          foto_url, // Atualizar a foto_url no banco de dados
-        })
-        .eq('id', id);
+          foto_url: foto_url_final,
+        }),
+      });
 
-      if (error) throw error;
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Erro ao atualizar pet');
+      }
+
       Alert.alert('Sucesso', 'Pet atualizado com sucesso');
-      router.replace(`/pets/${id}`); // Volta para a tela de detalhes do pet
+      router.replace(`/pets/${id}`);
     } catch (error: any) {
       console.error('Erro ao atualizar pet:', error);
       Alert.alert('Erro', `Não foi possível atualizar o pet: ${error.message}`);
@@ -211,8 +197,7 @@ export default function EditPetScreen() {
   if (loading) {
     return (
       <View style={styles.container}>
-        <ActivityIndicator animating={true} color={theme.colors.primary} size="large" />
-        <Text>Carregando...</Text>
+        <ActivityIndicator size="large" color={theme.colors.primary} />
       </View>
     );
   }
@@ -230,9 +215,10 @@ export default function EditPetScreen() {
             Editar Pet
           </Text>
 
+          {/* Seção de Foto */}
           <View style={styles.fotoContainer}>
-            {foto ? (
-              <Image source={{ uri: foto }} style={styles.foto} resizeMode="cover" />
+            {(foto || foto_url) ? (
+              <Image source={{ uri: foto || foto_url || '' }} style={styles.foto} />
             ) : (
               <View style={styles.fotoPlaceholder}>
                 <Text style={styles.fotoPlaceholderText}>Sem foto</Text>
@@ -244,18 +230,21 @@ export default function EditPetScreen() {
               style={styles.fotoButton}
               icon="camera"
             >
-              {foto ? 'Alterar Foto' : 'Adicionar Foto'}
+              {(foto || foto_url) ? 'Alterar Foto' : 'Adicionar Foto'}
             </Button>
-            {foto && (
-                <Button
-                    mode="text"
-                    onPress={() => setFoto(null)}
-                    style={{ marginTop: 8 }}
-                    textColor={theme.colors.error}
-                    icon="trash-can-outline"
-                >
-                    Remover Foto
-                </Button>
+            {(foto || foto_url) && (
+              <Button
+                mode="text"
+                onPress={() => {
+                  setFoto(null);
+                  setFotoUrl(null);
+                }}
+                style={styles.removeFotoButton}
+                textColor={theme.colors.error}
+                icon="trash-can-outline"
+              >
+                Remover Foto
+              </Button>
             )}
           </View>
 
@@ -289,10 +278,10 @@ export default function EditPetScreen() {
           <TextInput
             label="Idade"
             value={idade}
-            onChangeText={setIdade}
+            onChangeText={handleIdadeChange}
             mode="outlined"
             style={styles.input}
-            keyboardType="number-pad"
+            keyboardType="numeric"
             left={<TextInput.Icon icon="numeric" />}
           />
 
@@ -361,8 +350,6 @@ export default function EditPetScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
   },
   background: {
     position: 'absolute',
@@ -410,11 +397,11 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     paddingHorizontal: 12,
   },
-   switchLabel: {
+  switchLabel: {
     fontSize: 16,
     color: theme.colors.onSurface,
-   },
-   fotoContainer: {
+  },
+  fotoContainer: {
     alignItems: 'center',
     marginBottom: 24,
   },
@@ -439,13 +426,7 @@ const styles = StyleSheet.create({
   fotoButton: {
     marginTop: 8,
   },
-});
-
-function decodeBase64(base64: string): Uint8Array {
-  const binaryString = atob(base64);
-  const bytes = new Uint8Array(binaryString.length);
-  for (let i = 0; i < binaryString.length; i++) {
-    bytes[i] = binaryString.charCodeAt(i);
-  }
-  return bytes;
-} 
+  removeFotoButton: {
+    marginTop: 4,
+  },
+}); 

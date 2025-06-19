@@ -23,12 +23,12 @@ export class PetController {
   }
 
   @Get(':id')
-  async getPetById(@Param('id', ParseIntPipe) idPet: number): Promise<ModelPet> {
+  async encontrarPet(@Param('id') idPet: string) {
     return this.petService.encontrarPet(idPet);
   }
 
-  @Get('produtos/:id')
-  async getProdutosPetById(@Param('id', ParseIntPipe) idPet: number): Promise<any> {
+  @Get(':id/produtos')
+  async encontrarProdutosPet(@Param('id') idPet: string) {
     return this.petService.encontrarProdutosPet(idPet);
   }
 
@@ -38,15 +38,12 @@ export class PetController {
   }
 
   @Patch(':id')
-  async updatePet(
-    @Param('id', ParseIntPipe) idPet: number,
-    @Body() dados: UpdatePetDto
-  ): Promise<ModelPet> {
+  async atualizarPet(@Param('id') idPet: string, @Body() dados: UpdatePetDto) {
     return this.petService.atualizarPet(idPet, dados);
   }
 
   @Delete(':id')
-  async deletePet(@Param('id', ParseIntPipe) idPet: number) {
+  async excluirPet(@Param('id') idPet: string) {
     return this.petService.excluirPet(idPet);
   }
 }

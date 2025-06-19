@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { View, StyleSheet, Alert, ScrollView, Modal, TouchableOpacity, FlatList } from 'react-native';
 import { Text, TextInput, Button, ActivityIndicator, Surface, SegmentedButtons } from 'react-native-paper';
 import { useLocalSearchParams, router } from 'expo-router';
-import { supabase } from '../../../../lib/supabase';
+import { api } from '../../../../lib/api';
 import { styles as themeStyles, theme } from '../../../../theme';
 import { LinearGradient } from 'expo-linear-gradient';
 
@@ -21,6 +21,7 @@ export default function NewProdutoScreen() {
   const [showDiaModal, setShowDiaModal] = useState(false);
   const [showMesModal, setShowMesModal] = useState(false);
   const [showAnoModal, setShowAnoModal] = useState(false);
+  const [showTipoModal, setShowTipoModal] = useState(false);
 
   const meses = [
     { value: '01', label: 'Janeiro' },
@@ -117,7 +118,8 @@ export default function NewProdutoScreen() {
       }
 
       const dataCompra = formatDate();
-      if (!dataCompra) {
+      const dataCompraISO = dataCompra ? new Date(dataCompra).toISOString() : null;
+      if (!dataCompraISO) {
         Alert.alert('Erro', 'Por favor, insira uma data válida');
         return;
       }
@@ -127,32 +129,36 @@ export default function NewProdutoScreen() {
         return;
       }
 
-      const { error } = await supabase.from('Produto').insert({
+      const newProduct: any = {
         nome,
         tipo,
         preco: precoNumero,
-        data_compra: dataCompra,
-        observacoes: observacoes || null,
-        petid: petId as string,
-        ...(tipo === 'medicinal' && {
-          quantidade_vezes: parseInt(quantidadeVezes, 10),
-          quando_consumir: quandoConsumir,
-        }),
-      });
-
-      if (error) {
-        console.error('Erro ao adicionar produto:', error);
-        Alert.alert('Erro', 'Não foi possível adicionar o produto. Tente novamente.');
-        return;
+        data_compra: dataCompraISO,
+        petId: String(petId),
+      };
+      if (observacoes) newProduct.observacoes = observacoes;
+      if (tipo === 'medicinal') {
+        if (quantidadeVezes) newProduct.quantidade_vezes = parseInt(quantidadeVezes, 10);
+        if (quandoConsumir) newProduct.quando_consumir = quandoConsumir;
       }
 
+      await api.createProduct(newProduct);
       Alert.alert('Sucesso', 'Produto adicionado com sucesso!');
-      router.back();
+      router.replace(`/pets/${petId}`);
     } catch (error) {
       console.error('Erro ao adicionar produto:', error);
       Alert.alert('Erro', 'Ocorreu um erro ao adicionar o produto. Tente novamente.');
     }
   };
+
+  const tipos = [
+    { value: 'medicinal', label: 'Medicinal' },
+    { value: 'higiene', label: 'Higiene' },
+    { value: 'alimentacao', label: 'Alimentação' },
+    { value: 'brinquedo', label: 'Brinquedo' },
+    { value: 'alimenticio', label: 'Alimentício' },
+    { value: 'outros', label: 'Outros' },
+  ];
 
   return (
     <View style={styles.container}>
@@ -176,39 +182,16 @@ export default function NewProdutoScreen() {
             left={<TextInput.Icon icon="tag" />}
           />
 
-          <View style={styles.segmentedButtonContainer}>
+          <View style={styles.inputContainer}>
             <Text style={styles.segmentedButtonLabel}>Tipo:</Text>
-            <SegmentedButtons
-              value={tipo}
-              onValueChange={(value) => setTipo(value as 'alimenticio' | 'medicinal' | 'higiene' | 'alimentacao' | 'brinquedo' | 'outros')}
-              buttons={[
-                {
-                  value: 'medicinal',
-                  label: 'Medicinal',
-                  icon: 'medical-bag',
-                },
-                {
-                  value: 'higiene',
-                  label: 'Higiene',
-                  icon: 'shower',
-                },
-                {
-                  value: 'alimentacao',
-                  label: 'Alimentação',
-                  icon: 'food-apple',
-                },
-                {
-                  value: 'brinquedo',
-                  label: 'Brinquedo',
-                  icon: 'toy-brick',
-                },
-                {
-                  value: 'outros',
-                  label: 'Outros',
-                  icon: 'dots-horizontal',
-                },
-              ]}
-            />
+            <Button
+              mode="outlined"
+              onPress={() => setShowTipoModal(true)}
+              style={styles.input}
+              icon="chevron-down"
+            >
+              {tipo ? tipos.find(t => t.value === tipo)?.label : 'Selecione o tipo'}
+            </Button>
           </View>
 
           {tipo === 'medicinal' && (
@@ -313,6 +296,14 @@ export default function NewProdutoScreen() {
             'Selecione o Ano'
           )}
 
+          {renderDatePickerModal(
+            showTipoModal,
+            () => setShowTipoModal(false),
+            tipos,
+            (value) => setTipo(value as any),
+            'Selecione o tipo do produto'
+          )}
+
           <TextInput
             label="Observações (Opcional)"
             value={observacoes}
@@ -380,7 +371,7 @@ const styles = StyleSheet.create({
   button: {
     marginTop: 8,
   },
-  segmentedButtonContainer: {
+  inputContainer: {
     marginBottom: 16,
   },
   segmentedButtonLabel: {

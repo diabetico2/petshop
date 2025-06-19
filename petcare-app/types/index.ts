@@ -11,6 +11,10 @@ export interface User {
   email: string;
   nome: string;
   created_at: string;
+  user_metadata?: {
+    nome?: string;
+    [key: string]: any; // Para permitir outras propriedades dinâmicas do user_metadata
+  };
 }
 
 export interface Pet {
@@ -30,11 +34,13 @@ export interface Pet {
 export interface Produto {
   id: string;
   nome: string;
+  descricao?: string;
   preco: number;
+  imagem?: string;
+  petId: string;
+  tipo: 'alimenticio' | 'medicinal' | 'higiene' | 'alimentacao' | 'brinquedo' | 'outros';
   data_compra: string;
   observacoes?: string;
-  petid: string;
-  tipo: 'alimenticio' | 'medicinal';
   quantidade_vezes?: number;
   quando_consumir?: string;
 } 
