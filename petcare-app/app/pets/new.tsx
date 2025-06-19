@@ -30,23 +30,23 @@ export default function NewPetScreen() {
   // Função para selecionar imagem
   const pickImage = async () => {
     try {
-      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-      
-      if (status !== 'granted') {
-        Alert.alert('Erro', 'Precisamos de permissão para acessar suas fotos');
-        return;
-      }
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    
+    if (status !== 'granted') {
+      Alert.alert('Erro', 'Precisamos de permissão para acessar suas fotos');
+      return;
+    }
 
-      const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
-        allowsEditing: true,
-        aspect: [1, 1],
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [1, 1],
         quality: 0.8,
-      });
+    });
 
-      if (!result.canceled) {
-        setFoto(result.assets[0].uri);
-      }
+    if (!result.canceled) {
+      setFoto(result.assets[0].uri);
+    }
     } catch (error) {
       console.error('Erro ao selecionar imagem:', error);
       Alert.alert('Erro', 'Não foi possível selecionar a imagem');
@@ -73,7 +73,7 @@ export default function NewPetScreen() {
           type: 'image/jpeg',
           name: 'pet-photo.jpg',
         } as any);
-      }
+        }
 
       const uploadResponse = await fetch('http://localhost:3000/upload', {
         method: 'POST',
@@ -90,7 +90,7 @@ export default function NewPetScreen() {
 
       const uploadResult = await uploadResponse.json();
       console.log('Upload concluído:', uploadResult);
-      
+
       return uploadResult.url;
     } catch (error) {
       console.error('Erro no upload:', error);
@@ -147,14 +147,14 @@ export default function NewPetScreen() {
           'Authorization': `Bearer ${localStorage.getItem('access_token')}`
         },
         body: JSON.stringify({
-          nome,
-          raca,
-          especie,
-          idade: parseInt(idade, 10),
-          sexo,
-          corPelagem,
-          castrado,
-          user_id: user.id,
+        nome,
+        raca,
+        especie,
+        idade: parseInt(idade, 10),
+        sexo,
+        corPelagem,
+        castrado,
+        user_id: user.id,
           foto_url: foto_url_final,
         }),
       });
@@ -368,11 +368,11 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     paddingHorizontal: 12,
   },
-  switchLabel: {
+   switchLabel: {
     fontSize: 16,
     color: theme.colors.onSurface,
-  },
-  fotoContainer: {
+   },
+   fotoContainer: {
     alignItems: 'center',
     marginBottom: 24,
   },

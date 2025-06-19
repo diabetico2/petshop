@@ -40,13 +40,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         });
         if (res.ok) {
           const userData = await res.json();
-          setUser({
+        setUser({
             id: userData.id,
             email: userData.email,
             nome: userData.nome,
             created_at: userData.created_at,
-          });
-        } else {
+        });
+      } else {
           setUser(null);
         }
       } catch {
@@ -68,12 +68,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || 'Erro ao logar');
       // data já é o usuário retornado pelo backend
-      setUser({
+        setUser({
         id: data.id,
         email: data.email,
         nome: data.nome,
         created_at: data.created_at,
-      });
+        });
       // Se o backend retornar um token, salve aqui (exemplo: saveToken(data.token))
     } finally {
       setLoading(false);
@@ -81,7 +81,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }
 
   async function register(email: string, senha: string, nome: string) {
-    setLoading(true);
+      setLoading(true);
     try {
       const res = await fetch('http://localhost:3000/auth/register', {
         method: 'POST',
@@ -98,7 +98,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   async function signOut() {
     clearToken();
-    setUser(null);
+      setUser(null);
   }
 
   return (
