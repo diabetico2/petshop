@@ -37,12 +37,12 @@ Aplicativo mobile para gerenciar os cuidados do seu pet, desenvolvido com React 
    npm install
    ```
 3. Configure a URL do backend:
-   - Crie um arquivo `.env` na raiz do projeto (se necessário)
+   - Crie um arquivo `.env` na raiz do projeto (opcional)
    - Defina a variável `API_URL` com o endereço do backend, por exemplo:
      ```env
-     API_URL=http://192.168.0.100:3000
+     API_URL=https://petshop-production.up.railway.app
      ```
-   - (Ajuste o IP conforme sua rede/localhost)
+   - Se não definir, o app usará automaticamente o endpoint online de produção.
 4. Inicie o aplicativo:
    ```bash
    npm start

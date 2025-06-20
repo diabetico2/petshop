@@ -6,6 +6,8 @@ import { styles as themeStyles, theme } from '../../theme';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useAuth } from '../../contexts/AuthContext';
 import * as ImagePicker from 'expo-image-picker';
+import { API_URL } from '../../lib/api';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function NewPetScreen() {
   const [nome, setNome] = useState('');
@@ -57,40 +59,32 @@ export default function NewPetScreen() {
   const uploadImage = async (uri: string): Promise<string> => {
     try {
       console.log('Iniciando upload da imagem...');
-      
-      // Criar FormData para enviar o arquivo
       const formData = new FormData();
-      
-      // Para web, converter base64 para blob
       if (Platform.OS === 'web') {
         const response = await fetch(uri);
         const blob = await response.blob();
         formData.append('image', blob, 'pet-photo.jpg');
       } else {
-        // Para mobile, usar o URI diretamente
         formData.append('image', {
           uri: uri,
           type: 'image/jpeg',
           name: 'pet-photo.jpg',
         } as any);
-        }
-
-      const uploadResponse = await fetch('http://localhost:3000/upload', {
+      }
+      const token = await AsyncStorage.getItem('access_token');
+      const uploadResponse = await fetch(`${API_URL}/upload`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
+          'Authorization': `Bearer ${token}`,
         },
         body: formData,
       });
-
       if (!uploadResponse.ok) {
         const errorData = await uploadResponse.json();
         throw new Error(errorData.message || 'Erro no upload da imagem');
       }
-
       const uploadResult = await uploadResponse.json();
       console.log('Upload concluído:', uploadResult);
-
       return uploadResult.url;
     } catch (error) {
       console.error('Erro no upload:', error);
@@ -125,8 +119,6 @@ export default function NewPetScreen() {
       setLoading(true);
       console.log('Iniciando processo de adicionar pet...');
       console.log('User ID:', user.id);
-
-      // Upload da imagem se foi selecionada
       let foto_url_final = null;
       if (foto) {
         try {
@@ -138,13 +130,12 @@ export default function NewPetScreen() {
           Alert.alert('Aviso', `Não foi possível fazer upload da foto: ${error.message}. O pet será cadastrado sem foto.`);
         }
       }
-
-      console.log('Fazendo requisição para adicionar pet...');
-      const response = await fetch('http://localhost:3000/pets', {
+      const token = await AsyncStorage.getItem('access_token');
+      const response = await fetch(`${API_URL}/pets`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('access_token')}`
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
         nome,

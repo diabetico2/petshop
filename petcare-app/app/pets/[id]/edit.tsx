@@ -6,6 +6,8 @@ import { styles as themeStyles, theme } from '../../../theme';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useAuth } from '../../../contexts/AuthContext';
 import * as ImagePicker from 'expo-image-picker';
+import { API_URL } from '../../../lib/api';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function EditPetScreen() {
   const { id } = useLocalSearchParams();
@@ -58,40 +60,32 @@ export default function EditPetScreen() {
   const uploadImage = async (uri: string): Promise<string> => {
     try {
       console.log('Iniciando upload da imagem...');
-      
-      // Criar FormData para enviar o arquivo
       const formData = new FormData();
-      
-      // Para web, converter base64 para blob
       if (Platform.OS === 'web') {
         const response = await fetch(uri);
         const blob = await response.blob();
         formData.append('image', blob, 'pet-photo.jpg');
       } else {
-        // Para mobile, usar o URI diretamente
         formData.append('image', {
           uri: uri,
           type: 'image/jpeg',
           name: 'pet-photo.jpg',
         } as any);
       }
-
-      const uploadResponse = await fetch('http://localhost:3000/upload', {
+      const token = await AsyncStorage.getItem('access_token');
+      const uploadResponse = await fetch(`${API_URL}/upload`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
+          'Authorization': `Bearer ${token}`,
         },
         body: formData,
       });
-
       if (!uploadResponse.ok) {
         const errorData = await uploadResponse.json();
         throw new Error(errorData.message || 'Erro no upload da imagem');
       }
-
       const uploadResult = await uploadResponse.json();
       console.log('Upload concluído:', uploadResult);
-      
       return uploadResult.url;
     } catch (error) {
       console.error('Erro no upload:', error);
@@ -108,7 +102,7 @@ export default function EditPetScreen() {
   async function loadPet() {
     try {
       setLoading(true);
-      const response = await fetch(`http://localhost:3000/pets/${id}`);
+      const response = await fetch(`${API_URL}/pets/${id}`);
       if (!response.ok) throw new Error('Erro ao carregar pet');
       const pet = await response.json();
 
@@ -161,11 +155,12 @@ export default function EditPetScreen() {
         }
       }
 
-      const response = await fetch(`http://localhost:3000/pets/${id}`, {
+      const token = await AsyncStorage.getItem('access_token');
+      const response = await fetch(`${API_URL}/pets/${id}`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('access_token')}`
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
           nome,

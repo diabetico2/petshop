@@ -1,4 +1,6 @@
-const API_URL = 'http://localhost:3000'; // Change this to your NestJS backend URL
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+export const API_URL = process.env.EXPO_PUBLIC_API_URL || 'https://petshop-production.up.railway.app'; 
 
 export interface Product {
   id: string;
@@ -15,8 +17,8 @@ export interface Product {
 }
 
 class ApiService {
-  private getAuthHeader() {
-    const token = localStorage.getItem('access_token');
+  private async getAuthHeader() {
+    const token = await AsyncStorage.getItem('access_token');
     return {
       'Authorization': `Bearer ${token}`,
       'Content-Type': 'application/json',
@@ -25,21 +27,21 @@ class ApiService {
 
   // Products
   async getProducts(): Promise<Product[]> {
-    const headers = this.getAuthHeader();
+    const headers = await this.getAuthHeader();
     const response = await fetch(`${API_URL}/produtos`, { headers });
     if (!response.ok) throw new Error('Failed to fetch products');
     return response.json();
   }
 
   async getProduct(id: string): Promise<Product> {
-    const headers = this.getAuthHeader();
+    const headers = await this.getAuthHeader();
     const response = await fetch(`${API_URL}/produtos/${id}`, { headers });
     if (!response.ok) throw new Error('Failed to fetch product');
     return response.json();
   }
 
   async createProduct(product: Omit<Product, 'id'>): Promise<Product> {
-    const headers = this.getAuthHeader();
+    const headers = await this.getAuthHeader();
     const response = await fetch(`${API_URL}/produtos`, {
       method: 'POST',
       headers,
@@ -54,7 +56,7 @@ class ApiService {
   }
 
   async updateProduct(id: string, product: Partial<Product>): Promise<Product> {
-    const headers = this.getAuthHeader();
+    const headers = await this.getAuthHeader();
     const response = await fetch(`${API_URL}/produtos/${id}`, {
       method: 'PUT',
       headers,
@@ -65,7 +67,7 @@ class ApiService {
   }
 
   async deleteProduct(id: string): Promise<void> {
-    const headers = this.getAuthHeader();
+    const headers = await this.getAuthHeader();
     const response = await fetch(`${API_URL}/produtos/${id}`, {
       method: 'DELETE',
       headers,

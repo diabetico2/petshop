@@ -31,7 +31,7 @@ export default function LoginScreen() {
     try {
       setLoading(true);
       await signIn(email, password);
-      router.replace('/pets');
+        router.replace('/pets');
     } catch (error: any) {
       console.error('Login error details:', error);
       Alert.alert(

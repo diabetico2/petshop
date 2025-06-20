@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { View, StyleSheet, FlatList, Alert, Image } from 'react-native';
 import { Text, Card, Button, ActivityIndicator, FAB, Surface } from 'react-native-paper';
 import { useAuth } from '../../contexts/AuthContext';
-import { api } from '../../lib/api';
+import { API_URL } from '../../lib/api';
 import { Pet } from '../../types';
 import { router } from 'expo-router';
 import { styles as themeStyles, theme } from '../../theme';
@@ -28,7 +28,7 @@ export default function PetsScreen() {
   async function loadPets() {
     try {
       setLoading(true);
-      const response = await fetch(`http://localhost:3000/pets?userId=${user?.id}`);
+      const response = await fetch(`${API_URL}/pets?userId=${user?.id}`);
       if (!response.ok) throw new Error('Erro ao buscar pets');
       const data = await response.json();
       setPets(data || []);
@@ -54,7 +54,7 @@ export default function PetsScreen() {
           onPress: async () => {
             try {
               setLoading(true);
-              const response = await fetch(`http://localhost:3000/pets/${petId}`, {
+              const response = await fetch(`${API_URL}/pets/${petId}`, {
                 method: 'DELETE',
               });
               if (!response.ok) throw new Error('Erro ao remover o pet');

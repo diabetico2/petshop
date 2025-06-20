@@ -1,4 +1,6 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
+import { API_URL } from '../lib/api';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 interface User {
   id: string;
@@ -21,21 +23,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Salvar token no localStorage/sessionStorage
-  const saveToken = (token: string) => localStorage.setItem('access_token', token);
-  const getToken = () => localStorage.getItem('access_token');
-  const clearToken = () => localStorage.removeItem('access_token');
+  // Salvar token no AsyncStorage
+  const saveToken = async (token: string) => await AsyncStorage.setItem('access_token', token);
+  const getToken = async () => await AsyncStorage.getItem('access_token');
+  const clearToken = async () => await AsyncStorage.removeItem('access_token');
 
   useEffect(() => {
     // Tenta carregar o usuário ao iniciar
     const fetchUser = async () => {
-      const token = getToken();
+      const token = await getToken();
       if (!token) {
         setLoading(false);
         return;
       }
       try {
-        const res = await fetch('http://localhost:3000/auth/me', {
+        const res = await fetch(`${API_URL}/auth/me`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         if (res.ok) {
@@ -60,7 +62,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   async function signIn(email: string, senha: string) {
     setLoading(true);
     try {
-      const res = await fetch('http://localhost:3000/auth/login', {
+      const res = await fetch(`${API_URL}/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password: senha }),
@@ -83,7 +85,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   async function register(email: string, senha: string, nome: string) {
       setLoading(true);
     try {
-      const res = await fetch('http://localhost:3000/auth/register', {
+      const res = await fetch(`${API_URL}/auth/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password: senha, nome }),
@@ -97,7 +99,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }
 
   async function signOut() {
-    clearToken();
+    await clearToken();
       setUser(null);
   }
 

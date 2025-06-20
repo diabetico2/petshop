@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { View, StyleSheet, ScrollView, Image, TouchableOpacity } from 'react-native';
 import { Text, Card, Button, IconButton, Divider, Surface } from 'react-native-paper';
 import { useLocalSearchParams, useRouter, useFocusEffect } from 'expo-router';
-import { api } from '../../../lib/api';
+import { API_URL, api } from '../../../lib/api';
 import { Pet, Produto } from '../../../types';
 import { LinearGradient } from 'expo-linear-gradient';
 import { theme } from '../../../theme';
@@ -25,7 +25,7 @@ export default function PetDetailsScreen() {
   const loadPet = async () => {
     try {
       // Buscar pet pelo backend
-      const response = await fetch(`http://localhost:3000/pets/${id}`);
+      const response = await fetch(`${API_URL}/pets/${id}`);
       if (!response.ok) throw new Error('Erro ao buscar pet');
       const petData = await response.json();
       setPet(petData);
@@ -37,7 +37,12 @@ export default function PetDetailsScreen() {
         if (b.tipo === 'medicinal' && a.tipo !== 'medicinal') return 1;
         return new Date(b.data_compra).getTime() - new Date(a.data_compra).getTime();
       });
-      setProdutos(sortedProdutos);
+      setProdutos(
+        sortedProdutos.map((p) => ({
+          ...p,
+          tipo: p.tipo as Produto['tipo'],
+        }))
+      );
     } catch (error) {
       console.error('Erro ao carregar dados:', error);
     } finally {
@@ -47,7 +52,7 @@ export default function PetDetailsScreen() {
 
   const handleDelete = async () => {
     try {
-      const response = await fetch(`http://localhost:3000/pets/${id}`, {
+      const response = await fetch(`${API_URL}/pets/${id}`, {
         method: 'DELETE',
       });
       if (!response.ok) throw new Error('Erro ao deletar pet');
@@ -56,6 +61,12 @@ export default function PetDetailsScreen() {
       console.error('Erro ao deletar pet:', error);
     }
   };
+
+  function getPetImageUrl(foto_url: string | null) {
+    if (!foto_url) return undefined;
+    if (foto_url.startsWith('http')) return foto_url;
+    return `${API_URL}${foto_url.startsWith('/') ? '' : '/'}${foto_url}`;
+  }
 
   if (loading) {
     return (
@@ -85,9 +96,9 @@ export default function PetDetailsScreen() {
             style={styles.headerGradient}
           />
           {pet?.foto_url ? (
-            console.log('Rendering Image with URL:', pet.foto_url),
+            console.log('Rendering Image with URL:', getPetImageUrl(pet.foto_url)),
             <Image
-              source={{ uri: pet.foto_url }}
+              source={{ uri: getPetImageUrl(pet.foto_url) }}
               style={styles.petImage}
               resizeMode="cover"
               onError={(e) => console.error('Erro ao carregar imagem do pet:', e.nativeEvent.error)}
