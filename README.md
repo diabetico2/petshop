@@ -1,6 +1,6 @@
 # Petshop Fullstack
 
-Aplicativo completo para gerenciamento de pets, com backend próprio (NestJS + PostgreSQL) e frontend mobile (React Native + Expo). O backend utiliza **apenas PostgreSQL** (hospedado no Railway), sem Supabase. O frontend se comunica exclusivamente com o backend via API REST.
+Aplicativo completo para gerenciamento de pets, com backend próprio (NestJS + PostgreSQL) e frontend mobile (React Native + Expo). O backend utiliza **PostgreSQL** (hospedado no Railway). O frontend se comunica exclusivamente com o backend via API REST.
 
 ## Arquitetura
 
@@ -121,11 +121,32 @@ petshop/
 
 > Todas as rotas protegidas exigem Bearer Token JWT no header: `Authorization: Bearer <token>`
 
-## Observações
+## Testes Manuais Documentados
 
-- O frontend **NÃO** acessa banco de dados ou Supabase diretamente, apenas o backend.
-- O backend valida todos os dados recebidos e segue boas práticas de segurança.
-- Para produção, use HTTPS e variáveis de ambiente seguras.
+Abaixo estão três cenários de testes manuais realizados para garantir o funcionamento do sistema:
+
+### Cenário 1: Cadastro e Login de Usuário
+1. Acesse o aplicativo mobile.
+2. Clique em "Registrar" e preencha os dados de um novo usuário.
+3. Confirme o cadastro e verifique se a mensagem de sucesso aparece.
+4. Faça logout (se aplicável) e tente fazer login com o novo usuário.
+5. Verifique se o login é realizado com sucesso e o token JWT é recebido.
+
+### Cenário 2: Cadastro, Listagem e Edição de Pet
+1. Com um usuário autenticado, acesse a tela de pets.
+2. Clique em "Adicionar Pet" e preencha os dados (nome, espécie, etc.).
+3. Salve e verifique se o pet aparece na lista.
+4. Clique em um pet da lista para ver os detalhes.
+5. Edite algum dado do pet (ex: nome) e salve.
+6. Verifique se a alteração aparece corretamente na listagem e nos detalhes.
+
+### Cenário 3: Cadastro de Produto para um Pet
+1. Com um pet já cadastrado, acesse os detalhes do pet.
+2. Clique em "Adicionar Produto" e preencha os dados do produto (nome, tipo, etc.).
+3. Salve e verifique se o produto aparece na lista de produtos do pet.
+4. Edite ou remova o produto e verifique se as alterações são refletidas corretamente.
+
+> Todos os testes foram realizados utilizando o app mobile conectado ao backend, validando as respostas da API e o fluxo completo de autenticação, cadastro e manipulação de dados.
 
 ## Testes Manuais Documentados
 
