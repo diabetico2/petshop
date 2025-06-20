@@ -37,7 +37,6 @@ Aplicativo completo para gerenciamento de pets, com backend próprio (NestJS + P
 - Node.js 16 ou superior
 - npm ou yarn
 - Expo CLI
-- Railway (para banco de dados PostgreSQL)
 - Android Studio (para emulador Android) ou Xcode (para iOS)
 
 ## Instalação e Execução
@@ -99,7 +98,7 @@ petshop/
 │   ├── theme/
 │   ├── assets/
 │   └── ...
-└── README.md        # Este arquivo
+└── README.md      
 ```
 
 ## Endpoints principais do backend
