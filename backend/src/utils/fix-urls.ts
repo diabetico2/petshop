@@ -8,7 +8,7 @@ export async function fixOldImageUrls() {
   // Atualizar pets com URLs antigas
   const petsWithOldUrls = await prisma.pet.findMany({
     where: {
-      foto_url: {
+      fotoUrl: {
         contains: 'localhost:3000'
       }
     }
