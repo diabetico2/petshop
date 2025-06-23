@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, FlatList, Alert, Image } from 'react-native';
 import { Text, Card, Button, ActivityIndicator, FAB, Surface } from 'react-native-paper';
 import { useAuth } from '../../contexts/AuthContext';
@@ -13,6 +13,14 @@ export default function PetsScreen() {
   const [pets, setPets] = useState<Pet[]>([]);
   const [loading, setLoading] = useState(true);
   const { user, loading: authLoading, signOut } = useAuth();
+
+  // Reage diretamente quando o usuário é deslogado
+  useEffect(() => {
+    if (!authLoading && !user) {
+      setPets([]);
+      setLoading(false);
+    }
+  }, [user, authLoading]);
 
   useFocusEffect(
     React.useCallback(() => {
@@ -158,7 +166,6 @@ export default function PetsScreen() {
             mode="outlined"
             onPress={async () => {
               await signOut();
-              router.replace('/');
             }}
             style={styles.headerButton}
             icon="logout"

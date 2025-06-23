@@ -1,6 +1,7 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import { API_URL } from '../lib/api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { router } from 'expo-router';
 
 interface User {
   id: string;
@@ -101,8 +102,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }
 
   async function signOut() {
+    setLoading(true);
     await clearToken();
-      setUser(null);
+    setUser(null);
+    setLoading(false);
+    // Força o redirecionamento para a tela de login
+    setTimeout(() => {
+      router.replace('/');
+    }, 100);
   }
 
   return (

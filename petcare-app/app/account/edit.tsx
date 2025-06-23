@@ -131,9 +131,7 @@ export default function EditAccountScreen() {
               if (!response.ok) {
                 const errorData = await response.json();
                 throw new Error(errorData.message || 'Erro ao excluir conta');
-              }
-
-              Alert.alert(
+              }              Alert.alert(
                 'Conta Excluída',
                 'Sua conta foi excluída com sucesso.',
                 [
@@ -141,7 +139,6 @@ export default function EditAccountScreen() {
                     text: 'OK',
                     onPress: () => {
                       signOut();
-                      router.replace('/');
                     }
                   }
                 ]

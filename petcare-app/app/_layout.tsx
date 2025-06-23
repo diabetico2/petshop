@@ -93,13 +93,20 @@ export default function RootLayout() {
 } 
 
 function LayoutContent() {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
 
-  if (user) {
-    return <AppStack />;
-  } else {
+  // Enquanto está carregando, não renderiza nada ou mostra um loading
+  if (loading) {
     return <AuthStack />;
   }
+
+  // Se tem usuário autenticado, mostra o app
+  if (user) {
+    return <AppStack />;
+  }
+
+  // Se não tem usuário, mostra as telas de auth
+  return <AuthStack />;
 }
 
 

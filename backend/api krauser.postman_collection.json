@@ -1,12 +1,103 @@
 {
 	"info": {
 		"_postman_id": "1f42a917-e761-4bee-a8f2-7e7b24e23d62",
-		"name": "api krauser",
-		"description": "# API Petshop - Documentação\n\n**Objetivo:**\nAPI para gerenciamento de usuários, pets e produtos de um sistema de petshop.\n\n**Público-alvo:**\nDesenvolvedores e integradores de sistemas.\n\n**URL base:**\nhttp://localhost:3000\n\n**Autenticação:**\nAtualmente, esta API não exige autenticação para acesso às rotas.",
+		"name": "API Petshop - Krauser",
+		"description": "# API Petshop - Documentação Completa\n\n**Objetivo:**\nAPI RESTful para gerenciamento completo de um sistema de petshop, incluindo usuários, pets e produtos.\n\n**Público-alvo:**\nDesenvolvedores e integradores de sistemas.\n\n**URLs Base:**\n- **Local:** http://localhost:3000\n- **Produção:** https://petshop-production.up.railway.app\n\n**Autenticação:**\nA API utiliza sistema próprio de autenticação com senhas hasheadas (bcrypt). Algumas rotas são públicas (login, registro) e outras requerem autenticação.\n\n**Tecnologias:**\n- NestJS + TypeScript\n- PostgreSQL (Railway)\n- Prisma ORM\n- bcrypt para senhas\n- Multer para upload\n\n**Funcionalidades:**\n- ✅ Cadastro e autenticação de usuários\n- ✅ Gerenciamento de pets por usuário\n- ✅ Gerenciamento de produtos por pet\n- ✅ Upload de imagens\n- ✅ Filtragem automática por usuário\n- ✅ Hash seguro de senhas",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
 		"_exporter_id": "40712893"
 	},
 	"item": [
+		{
+			"name": "Autenticação",
+			"item": [
+				{
+					"name": "Registrar Usuário",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"usuario@exemplo.com\",\n    \"password\": \"senha123\",\n    \"nome\": \"Nome do Usuário\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/auth/register",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"auth",
+								"register"
+							]
+						},
+						"description": "Registra um novo usuário no sistema. A senha é automaticamente hasheada com bcrypt."
+					},
+					"response": []
+				},
+				{
+					"name": "Login",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"usuario@exemplo.com\",\n    \"password\": \"senha123\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/auth/login",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"auth",
+								"login"
+							]
+						},
+						"description": "Autentica um usuário e retorna os dados do usuário. A senha é verificada usando bcrypt.compare."
+					},
+					"response": []
+				},
+				{
+					"name": "Dados do Usuário Autenticado",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/auth/me",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"auth",
+								"me"
+							]
+						},
+						"description": "Retorna os dados do usuário autenticado."
+					},
+					"response": []
+				}
+			],
+			"description": "## Autenticação\n\nSistema de autenticação próprio com senhas hasheadas usando bcrypt.\n\n### Registrar (POST /auth/register)\n- Cria novo usuário\n- Hash automático da senha\n- Retorna dados do usuário criado\n\n### Login (POST /auth/login)\n- Autentica com email/senha\n- Verifica hash com bcrypt.compare\n- Retorna dados do usuário\n\n### Me (GET /auth/me)\n- Retorna dados do usuário pelo ID"
+		},
 		{
 			"name": "Usuários",
 			"item": [
@@ -489,6 +580,40 @@
 				}
 			],
 			"description": "## Produtos\n\n### Criar Produto (POST /produtos)\n- Cria um novo produto, podendo ser vinculado a um pet.\n- Não requer autenticação.\n\n**Request body exemplo:**\n```json\n{\n  \"nome\": \"Ração Premium\",\n  \"tipo\": \"Alimento\",\n  \"preco\": 99.90,\n  \"petId\": 1\n}\n```\n\n| Campo  | Tipo    | Obrigatório | Descrição                |\n|--------|---------|-------------|--------------------------|\n| nome   | string  | Sim         | Nome do produto          |\n| tipo   | string  | Sim         | Tipo do produto          |\n| preco  | number  | Sim         | Preço do produto         |\n| petId  | int     | Não         | ID do pet relacionado    |\n\n**Response body exemplo:**\n```json\n{\n  \"id\": 1,\n  \"nome\": \"Ração Premium\",\n  \"tipo\": \"Alimento\",\n  \"preco\": 99.90,\n  \"petId\": 1\n}\n```\n\n| Campo  | Tipo    | Descrição                |\n|--------|---------|--------------------------|\n| id     | int     | ID do produto            |\n| nome   | string  | Nome do produto          |\n| tipo   | string  | Tipo do produto          |\n| preco  | number  | Preço do produto         |\n| petId  | int     | ID do pet relacionado    |\n\n**Códigos de resposta:**\n- 201: Produto criado com sucesso\n- 400: Dados inválidos\n- 404: Pet não encontrado\n- 500: Erro interno\n\n**Erros comuns:**\n- 400: Campos obrigatórios ausentes ou inválidos.\n- 404: Pet informado não existe."
+		},
+		{
+			"name": "Upload",
+			"item": [
+				{
+					"name": "Upload de Imagem",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "file",
+									"type": "file",
+									"src": []
+								}
+							]
+						},
+						"url": {
+							"raw": "{{baseUrl}}/upload",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"upload"
+							]
+						},
+						"description": "Faz upload de uma imagem (JPEG, PNG, GIF) para o servidor. Retorna a URL da imagem uploadada."
+					},
+					"response": []
+				}
+			],
+			"description": "## Upload de Arquivos\n\n### Upload de Imagem (POST /upload)\n- Permite upload de imagens para pets\n- Formatos aceitos: JPEG, PNG, GIF\n- Tamanho máximo: conforme configuração do servidor\n- Utiliza multipart/form-data\n\n**Request:**\n- Method: POST\n- Content-Type: multipart/form-data\n- Body: form-data com campo 'file'\n\n**Response:**\n```json\n{\n  \"url\": \"/uploads/filename.jpg\",\n  \"filename\": \"filename.jpg\"\n}\n```\n\n**Uso:** A URL retornada pode ser usada no campo `foto_url` ao criar/editar pets."
 		}
 	],
 	"event": [
@@ -497,7 +622,9 @@
 			"script": {
 				"type": "text/javascript",
 				"exec": [
-					""
+					"// Configura automaticamente a URL base baseada no ambiente",
+					"// Para trocar entre local e produção, altere a variável 'baseUrl'",
+					"console.log('API Base URL:', pm.variables.get('baseUrl'));"
 				]
 			}
 		},
@@ -506,19 +633,43 @@
 			"script": {
 				"type": "text/javascript",
 				"exec": [
-					""
+					"// Testes automáticos básicos",
+					"pm.test('Status code é válido', function () {",
+					"    pm.expect(pm.response.code).to.be.oneOf([200, 201, 204]);",
+					"});",
+					"",
+					"pm.test('Response time é menor que 2000ms', function () {",
+					"    pm.expect(pm.response.responseTime).to.be.below(2000);",
+					"});"
 				]
 			}
 		}
 	],
 	"variable": [
 		{
-			"key": "id",
-			"value": "1"
+			"key": "baseUrl",
+			"value": "https://petshop-production.up.railway.app",
+			"description": "URL base da API - Produção (Railway)"
 		},
 		{
-			"key": "base_url",
-			"value": "https://postman-rest-api-learner.glitch.me/"
+			"key": "baseUrl_local",
+			"value": "http://localhost:3000",
+			"description": "URL base da API - Desenvolvimento Local"
+		},
+		{
+			"key": "userId",
+			"value": "uuid-do-usuario",
+			"description": "ID do usuário para testes"
+		},
+		{
+			"key": "petId", 
+			"value": "uuid-do-pet",
+			"description": "ID do pet para testes"
+		},
+		{
+			"key": "produtoId",
+			"value": "uuid-do-produto", 
+			"description": "ID do produto para testes"
 		}
 	]
 }
