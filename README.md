@@ -274,7 +274,3 @@ Use o Expo Go ou emulador para rodar o app mobile.
 - **Frontend:** Disponível via Expo Go ou build nativo
 - **Banco:** PostgreSQL gerenciado no Railway
 
-## Licença
-
-MIT License
-
