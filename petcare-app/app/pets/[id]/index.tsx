@@ -7,6 +7,7 @@ import { Pet, Produto } from '../../../types';
 import { LinearGradient } from 'expo-linear-gradient';
 import { theme } from '../../../theme';
 import { useAuth } from '../../../contexts/AuthContext';
+import Icon from 'react-native-vector-icons/MaterialIcons';
 
 export default function PetDetailsScreen() {
   const { id } = useLocalSearchParams();
@@ -91,250 +92,355 @@ export default function PetDetailsScreen() {
   }
 
   return (
-    <LinearGradient
-      colors={[theme.colors.background, theme.colors.background]}
-      style={styles.container}
-    >
-      <ScrollView style={styles.scrollView}>
-        <Surface style={styles.header}>
-          <LinearGradient
-            colors={['rgba(0,0,0,0.7)', 'rgba(0,0,0,0)']}
-            style={styles.headerGradient}
-          />
-          {pet?.foto_url ? (
-            console.log('Rendering Image with URL:', getPetImageUrl(pet.foto_url)),
+    <ScrollView style={styles.container}>
+      <LinearGradient
+        colors={['#667eea', '#764ba2']}
+        style={styles.header}
+      >
+        <View style={styles.petImageContainer}>
+          {pet.foto_url ? (
             <Image
               source={{ uri: getPetImageUrl(pet.foto_url) }}
               style={styles.petImage}
-              resizeMode="cover"
-              onError={(e) => console.error('Erro ao carregar imagem do pet:', e.nativeEvent.error)}
+              onError={() => console.error('Erro ao carregar imagem do pet')}
               onLoad={() => console.log('Imagem do pet carregada com sucesso!')}
             />
           ) : (
             <View style={styles.petImagePlaceholder}>
-              <Text style={styles.petImagePlaceholderText}>
-                {pet?.nome?.charAt(0).toUpperCase()}
-              </Text>
+              <Icon name="pets" size={80} color="#fff" />
             </View>
           )}
-          <Text variant="headlineLarge" style={styles.petName}>
-            {pet?.nome}
-          </Text>
-          {user?.nome && (
-            <Text variant="bodyMedium" style={styles.userNameText}>
-              Dono: {user.nome}
-            </Text>
-          )}
+        </View>
+      </LinearGradient>
+
+      <Surface style={styles.contentCard} elevation={4}>
+        <View style={styles.petInfo}>
+          <Text style={styles.petName}>{pet.nome}</Text>
+          
+          <View style={styles.infoGrid}>
+            <View style={styles.infoItem}>
+              <Icon name="category" size={20} color="#667eea" />
+              <View style={styles.infoTextContainer}>
+                <Text style={styles.infoLabel}>Raça</Text>
+                <Text style={styles.infoValue}>{pet.raca || 'Não informado'}</Text>
+              </View>
+            </View>
+
+            <View style={styles.infoItem}>
+              <Icon name="schedule" size={20} color="#667eea" />
+              <View style={styles.infoTextContainer}>
+                <Text style={styles.infoLabel}>Idade</Text>
+                <Text style={styles.infoValue}>{pet.idade ? `${pet.idade} anos` : 'Não informado'}</Text>
+              </View>
+            </View>
+
+            <View style={styles.infoItem}>
+              <Icon name={pet.sexo === 'Macho' ? 'male' : 'female'} size={20} color="#667eea" />
+              <View style={styles.infoTextContainer}>
+                <Text style={styles.infoLabel}>Sexo</Text>
+                <Text style={styles.infoValue}>{pet.sexo || 'Não informado'}</Text>
+              </View>
+            </View>
+
+            <View style={styles.infoItem}>
+              <Icon name="pets" size={20} color="#667eea" />
+              <View style={styles.infoTextContainer}>
+                <Text style={styles.infoLabel}>Espécie</Text>
+                <Text style={styles.infoValue}>{pet.especie || 'Não informado'}</Text>
+              </View>
+            </View>
+
+            <View style={styles.infoItem}>
+              <Icon name={pet.castrado ? 'check-circle' : 'cancel'} size={20} color={pet.castrado ? '#4caf50' : '#ff9800'} />
+              <View style={styles.infoTextContainer}>
+                <Text style={styles.infoLabel}>Castração</Text>
+                <Text style={[styles.infoValue, { color: pet.castrado ? '#4caf50' : '#ff9800' }]}>
+                  {pet.castrado ? 'Castrado' : 'Não castrado'}
+                </Text>
+              </View>
+            </View>
+          </View>
+        </View>
+
+        <View style={styles.actionsContainer}>
+          <TouchableOpacity
+            style={styles.primaryButton}
+            onPress={() => router.push(`/pets/${pet.id}/produtos/new`)}
+          >
+            <LinearGradient
+              colors={['#667eea', '#764ba2']}
+              style={styles.buttonGradient}
+            >
+              <Icon name="add-shopping-cart" size={20} color="#fff" />
+              <Text style={styles.primaryButtonText}>Adicionar Produto</Text>
+            </LinearGradient>
+          </TouchableOpacity>
+
+          <View style={styles.secondaryButtons}>
+            <TouchableOpacity
+              style={styles.secondaryButton}
+              onPress={() => router.push(`/pets/${pet.id}/edit`)}
+            >
+              <Icon name="edit" size={20} color="#667eea" />
+              <Text style={styles.secondaryButtonText}>Editar Pet</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Surface>
+
+      {produtos.length > 0 && (
+        <Surface style={styles.productsSection} elevation={2}>
+          <View style={styles.sectionHeader}>
+            <Icon name="inventory" size={24} color="#667eea" />
+            <Text style={styles.sectionTitle}>Histórico de Produtos</Text>
+          </View>
+          
+          {produtos.map((produto) => (
+            <View key={produto.id} style={styles.productCard}>
+              <View style={styles.productHeader}>
+                <Text style={styles.productName}>{produto.nome}</Text>
+                <TouchableOpacity
+                  onPress={() => router.push(`/pets/${pet.id}/produtos/${produto.id}/edit`)}
+                  style={styles.editButton}
+                >
+                  <Icon name="edit" size={18} color="#667eea" />
+                </TouchableOpacity>
+              </View>
+              
+              <View style={styles.productDetails}>
+                <View style={styles.productDetailItem}>
+                  <Icon name="calendar-today" size={16} color="#666" />
+                  <Text style={styles.productDetailText}>
+                    {new Date(produto.data_compra).toLocaleDateString('pt-BR')}
+                  </Text>
+                </View>
+                
+                <View style={styles.productDetailItem}>
+                  <Icon name="category" size={16} color="#666" />
+                  <Text style={styles.productDetailText}>Tipo: {produto.tipo}</Text>
+                </View>
+                
+                <View style={styles.productDetailItem}>
+                  <Icon name="attach-money" size={16} color="#666" />
+                  <Text style={styles.productDetailText}>R$ {produto.preco.toFixed(2)}</Text>
+                </View>
+
+                {produto.tipo === 'medicinal' && (
+                  <>
+                    {produto.quantidade_vezes && (
+                      <View style={styles.productDetailItem}>
+                        <Icon name="looks-one" size={16} color="#666" />
+                        <Text style={styles.productDetailText}>Quantidade: {produto.quantidade_vezes}x</Text>
+                      </View>
+                    )}
+                    
+                    {produto.quando_consumir && (
+                      <View style={styles.productDetailItem}>
+                        <Icon name="schedule" size={16} color="#666" />
+                        <Text style={styles.productDetailText}>Quando: {produto.quando_consumir}</Text>
+                      </View>
+                    )}
+                  </>
+                )}
+              </View>
+            </View>
+          ))}
         </Surface>
-
-        {/* Detalhes do Pet em linha */}
-        <View
-          style={{
-            padding: 20,
-            backgroundColor: 'white',
-            borderRadius: 16,
-            marginTop: -60, 
-            marginBottom: 16,
-            marginHorizontal: 16,
-            alignSelf: 'stretch',
-            elevation: 3,
-            shadowColor: '#000',
-            shadowOffset: { width: 0, height: 2 },
-            shadowOpacity: 0.1,
-            shadowRadius: 4,
-          }}
-        >
-          <Text variant="titleLarge" style={{ marginBottom: 12, fontWeight: 'bold' }}>
-            Informações do Pet
-          </Text>
-          <Text>
-            {[
-              pet?.nome,
-              pet?.especie,
-              pet?.raca,
-              pet?.corPelagem,
-              pet?.idade ? `${pet.idade} ${pet.idade === 1 ? 'ano' : 'anos'}` : null,
-              pet?.sexo,
-              pet?.castrado ? 'castrado' : 'não castrado'
-            ].filter(Boolean).join(', ')}
-          </Text>
-        </View>
-
-        <View style={styles.actions}>
-          <Button
-            mode="contained"
-            onPress={() => router.push(`/pets/${id}/produtos/new`)}
-            style={styles.addButton}
-          >
-            Adicionar Produto
-          </Button>
-          <Button
-            mode="outlined"
-            onPress={() => router.push(`/pets/${id}/edit`)}
-            style={styles.editButton}
-          >
-            Editar Pet
-          </Button>
-          <Button
-            mode="outlined"
-            onPress={handleDelete}
-            textColor={theme.colors.error}
-            style={styles.deleteButton}
-          >
-            Excluir Pet
-          </Button>
-        </View>
-
-        <View style={styles.section}>
-          <Text variant="titleLarge" style={styles.sectionTitle}>
-            Histórico de Produtos
-          </Text>
-          {produtos.length === 0 ? (
-            <Text style={styles.emptyText}>
-              Nenhum produto registrado para este pet
-            </Text>
-          ) : (
-            produtos.map((produto) => (
-              <Card key={produto.id} style={styles.produtoCard}>
-                <Card.Content>
-                  <View style={styles.produtoHeader}>
-                    <Text variant="titleMedium">{produto.nome}</Text>
-                    <Text variant="bodyMedium">
-                      {new Date(produto.data_compra).toLocaleDateString()}
-                    </Text>
-                    <IconButton
-                      icon="pencil"
-                      size={20}
-                      onPress={() => router.push(`/pets/${id}/produtos/${produto.id}/edit`)}
-                    />
-                  </View>
-                  <Text variant="bodyMedium">Tipo: {produto.tipo.charAt(0).toUpperCase() + produto.tipo.slice(1)}</Text>
-                  <Text variant="bodyMedium">R$ {produto.preco.toFixed(2)}</Text>
-                  {produto.tipo === 'medicinal' && (
-                    <View style={styles.medicinalDetails}>
-                      <Text variant="bodySmall">Quantidade: {produto.quantidade_vezes} vezes</Text>
-                      <Text variant="bodySmall">Consumo: {produto.quando_consumir}</Text>
-                    </View>
-                  )}
-                  {produto.observacoes && (
-                    <Text variant="bodySmall" style={styles.observacoes}>
-                      {produto.observacoes}
-                    </Text>
-                  )}
-                </Card.Content>
-              </Card>
-            ))
-          )}
-        </View>
-      </ScrollView>
-    </LinearGradient>
+      )}
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-  },
-  scrollView: {
-    flex: 1,
+    backgroundColor: '#f8f9fa',
   },
   header: {
-    height: 200,
-    backgroundColor: theme.colors.primary,
-    justifyContent: 'center',
+    paddingTop: 60,
+    paddingBottom: 40,
     alignItems: 'center',
-    position: 'relative',
+    justifyContent: 'center',
   },
-  headerGradient: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    top: 0,
-    bottom: 0,
+  petImageContainer: {
+    width: 150,
+    height: 150,
+    borderRadius: 75,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    padding: 4,
+    elevation: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
   },
   petImage: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    marginBottom: 8,
-    borderWidth: 3,
-    borderColor: 'white',
+    width: '100%',
+    height: '100%',
+    borderRadius: 71,
+    resizeMode: 'cover',
   },
   petImagePlaceholder: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    backgroundColor: theme.colors.surfaceVariant,
+    width: '100%',
+    height: '100%',
+    borderRadius: 71,
+    backgroundColor: 'rgba(255, 255, 255, 0.3)',
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 8,
-    borderWidth: 3,
-    borderColor: 'white',
   },
-  petImagePlaceholderText: {
-    fontSize: 48,
-    color: theme.colors.onSurfaceVariant,
-    fontWeight: 'bold',
+  contentCard: {
+    margin: 16,
+    marginTop: -20,
+    borderRadius: 20,
+    backgroundColor: '#fff',
+    overflow: 'hidden',
+  },
+  petInfo: {
+    padding: 20,
   },
   petName: {
-    color: 'white',
+    fontSize: 28,
     fontWeight: 'bold',
-    textShadowColor: 'rgba(0, 0, 0, 0.75)',
-    textShadowOffset: { width: -1, height: 1 },
-    textShadowRadius: 10,
+    color: '#333',
+    textAlign: 'center',
+    marginBottom: 24,
   },
-  actions: {
-    padding: 16,
+  infoGrid: {
+    gap: 16,
+  },
+  infoItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    backgroundColor: '#f8f9fa',
+    borderRadius: 12,
+    gap: 12,
+  },
+  infoTextContainer: {
+    flex: 1,
+  },
+  infoLabel: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#888',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    marginBottom: 2,
+  },
+  infoValue: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: '#333',
+  },
+  actionsContainer: {
+    padding: 20,
+    paddingTop: 0,
+    gap: 16,
+  },
+  primaryButton: {
+    borderRadius: 12,
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+  },
+  buttonGradient: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 16,
+    paddingHorizontal: 24,
+    borderRadius: 12,
     gap: 8,
   },
-  addButton: {
-    marginBottom: 8,
+  primaryButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
   },
-  editButton: {
-    marginBottom: 8,
+  secondaryButtons: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  secondaryButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 12,
+    backgroundColor: '#f8f9fa',
+    borderWidth: 1,
+    borderColor: '#e0e0e0',
+    gap: 6,
+  },
+  secondaryButtonText: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#667eea',
   },
   deleteButton: {
-    marginBottom: 8,
+    backgroundColor: '#fff5f5',
+    borderColor: '#ffcccb',
   },
-  section: {
-    padding: 16,
+  deleteButtonText: {
+    color: '#ff4444',
+  },
+  productsSection: {
+    margin: 16,
+    marginTop: 0,
+    borderRadius: 16,
+    backgroundColor: '#fff',
+    overflow: 'hidden',
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f0f0f0',
+    gap: 12,
   },
   sectionTitle: {
-    marginBottom: 12,
+    fontSize: 20,
     fontWeight: 'bold',
+    color: '#333',
   },
-  emptyText: {
-    textAlign: 'center',
-    color: theme.colors.outline,
-    marginTop: 20,
+  productCard: {
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f8f9fa',
   },
-  produtoCard: {
-    marginBottom: 12,
-    borderRadius: 8,
-    elevation: 2,
-  },
-  produtoHeader: {
+  productHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 4,
+    marginBottom: 12,
   },
-  medicinalDetails: {
-    marginTop: 8,
-    paddingLeft: 8,
-    borderLeftWidth: 2,
-    borderLeftColor: theme.colors.outline,
+  productName: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#333',
+    flex: 1,
   },
-  observacoes: {
-    marginTop: 8,
-    fontStyle: 'italic',
-    color: theme.colors.onSurfaceVariant,
+  editButton: {
+    padding: 8,
+    borderRadius: 8,
+    backgroundColor: '#f0f0f0',
   },
-  userNameText: {
-    color: 'white',
-    marginTop: 4,
-    textShadowColor: 'rgba(0, 0, 0, 0.5)',
-    textShadowOffset: { width: -1, height: 1 },
-    textShadowRadius: 5,
+  productDetails: {
+    gap: 8,
   },
-}); 
+  productDetailItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  productDetailText: {
+    fontSize: 14,
+    color: '#666',
+  },
+});

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, Alert, ScrollView, Modal, TouchableOpacity, FlatList } from 'react-native';
 import { Text, TextInput, Button, ActivityIndicator, Surface, SegmentedButtons } from 'react-native-paper';
 import { useLocalSearchParams, router } from 'expo-router';
@@ -14,14 +14,15 @@ export default function NewProdutoScreen() {
   const [dia, setDia] = useState<string>('');
   const [mes, setMes] = useState<string>('');
   const [ano, setAno] = useState<string>('');
+  const [dosageDiaria, setDosageDiaria] = useState('');
+  const [horarios, setHorarios] = useState('');
   const [observacoes, setObservacoes] = useState('');
-  const [quantidadeVezes, setQuantidadeVezes] = useState('');
-  const [quandoConsumir, setQuandoConsumir] = useState('');
   const [loading, setLoading] = useState(false);
   const [showDiaModal, setShowDiaModal] = useState(false);
   const [showMesModal, setShowMesModal] = useState(false);
   const [showAnoModal, setShowAnoModal] = useState(false);
   const [showTipoModal, setShowTipoModal] = useState(false);
+  const [showMedicationFields, setShowMedicationFields] = useState(false);
 
   const meses = [
     { value: '01', label: 'Janeiro' },
@@ -118,31 +119,31 @@ export default function NewProdutoScreen() {
       }
 
       const dataCompra = formatDate();
-      const dataCompraISO = dataCompra ? new Date(dataCompra).toISOString() : null;
+      const dataCompraISO = dataCompra ? new Date(dataCompra).toISOString() : '';
       if (!dataCompraISO) {
         Alert.alert('Erro', 'Por favor, insira uma data válida');
         return;
       }
 
-      if (tipo === 'medicinal' && (!quantidadeVezes || !quandoConsumir)) {
+      if (tipo === 'medicinal' && (!dosageDiaria || !horarios)) {
         Alert.alert('Erro', 'Por favor, preencha todos os campos para produtos medicinais');
         return;
       }
 
-      const newProduct: any = {
+      const productData = {
         nome,
         tipo,
-        preco: precoNumero,
+        preco: parseFloat(preco),
         data_compra: dataCompraISO,
-        petId: String(petId),
+        petId: Array.isArray(petId) ? petId[0] : petId,
+        ...(showMedicationFields && {
+          quantidade_vezes: dosageDiaria ? parseInt(dosageDiaria) : undefined,
+          quando_consumir: horarios || undefined,
+          observacoes: observacoes || undefined,
+        }),
       };
-      if (observacoes) newProduct.observacoes = observacoes;
-      if (tipo === 'medicinal') {
-        if (quantidadeVezes) newProduct.quantidade_vezes = parseInt(quantidadeVezes, 10);
-        if (quandoConsumir) newProduct.quando_consumir = quandoConsumir;
-      }
 
-      await api.createProduct(newProduct);
+      await api.createProduct(productData);
       Alert.alert('Sucesso', 'Produto adicionado com sucesso!');
       router.replace(`/pets/${petId}`);
     } catch (error) {
@@ -159,6 +160,14 @@ export default function NewProdutoScreen() {
     { value: 'alimenticio', label: 'Alimentício' },
     { value: 'outros', label: 'Outros' },
   ];
+
+  // Detectar se é medicamento baseado no tipo
+  useEffect(() => {
+    const isMedication = tipo.toLowerCase().includes('medicamento') || 
+                       tipo.toLowerCase().includes('medicinal') || 
+                       tipo.toLowerCase().includes('remédio');
+    setShowMedicationFields(isMedication);
+  }, [tipo]);
 
   return (
     <View style={styles.container}>
@@ -194,24 +203,37 @@ export default function NewProdutoScreen() {
             </Button>
           </View>
 
-          {tipo === 'medicinal' && (
+          {/* Campos específicos para medicamentos */}
+          {showMedicationFields && (
             <>
+              <Text style={styles.medicationTitle}>Informações do Medicamento</Text>
+              
               <TextInput
-                label="Quantidade de Vezes (por dia/semana)"
-                value={quantidadeVezes}
-                onChangeText={setQuantidadeVezes}
-                mode="outlined"
+                label="Quantas vezes por dia"
+                value={dosageDiaria}
+                onChangeText={setDosageDiaria}
                 style={styles.input}
                 keyboardType="numeric"
-                left={<TextInput.Icon icon="numeric" />}
+                placeholder="Ex: 2"
               />
+
               <TextInput
-                label="Quando Consumir (Ex: Manhã, Noite, Após refeição)"
-                value={quandoConsumir}
-                onChangeText={setQuandoConsumir}
-                mode="outlined"
+                label="Horários para tomar"
+                value={horarios}
+                onChangeText={setHorarios}
                 style={styles.input}
-                left={<TextInput.Icon icon="clock-outline" />}
+                placeholder="Ex: 8h, 20h ou De manhã e à noite"
+                multiline
+              />
+
+              <TextInput
+                label="Observações"
+                value={observacoes}
+                onChangeText={setObservacoes}
+                style={styles.input}
+                placeholder="Ex: Tomar com comida, não misturar com outros medicamentos"
+                multiline
+                numberOfLines={3}
               />
             </>
           )}
@@ -303,17 +325,6 @@ export default function NewProdutoScreen() {
             (value) => setTipo(value as any),
             'Selecione o tipo do produto'
           )}
-
-          <TextInput
-            label="Observações (Opcional)"
-            value={observacoes}
-            onChangeText={setObservacoes}
-            mode="outlined"
-            style={styles.input}
-            multiline
-            numberOfLines={4}
-            left={<TextInput.Icon icon="note-text-outline" />}
-          />
 
           <Button
             mode="contained"
@@ -433,4 +444,11 @@ const styles = StyleSheet.create({
   modalButton: {
     marginTop: 16,
   },
-}); 
+  medicationTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom: 16,
+    marginTop: 24,
+    color: theme.colors.primary,
+  },
+});

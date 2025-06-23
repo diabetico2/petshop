@@ -8,6 +8,7 @@ import { router } from 'expo-router';
 import { styles as themeStyles, theme } from '../../theme';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useFocusEffect } from 'expo-router';
+import Icon from 'react-native-vector-icons/MaterialIcons';
 
 export default function PetsScreen() {
   const [pets, setPets] = useState<Pet[]>([]);
@@ -97,7 +98,9 @@ export default function PetsScreen() {
         {item.foto_url ? (
           <Image source={{ uri: getPetImageUrl(item.foto_url) }} style={styles.petImagePreview} />
         ) : (
-          <Text style={styles.petEmoji}>🐾</Text>
+          <View style={styles.petImagePlaceholder}>
+            <Icon name="pets" size={60} color="#999" />
+          </View>
         )}
       </View>
       <View style={styles.petInfo}>
@@ -141,46 +144,48 @@ export default function PetsScreen() {
         style={styles.background}
       />
 
-      <View style={styles.headerRow}>
-        <View style={styles.header}>
-          <Text variant="headlineMedium" style={styles.welcomeText}>
-            Olá, {user?.nome}!
-          </Text>
-          <Text variant="bodyLarge" style={styles.subtitle}>
-            Gerencie seus pets aqui
-          </Text>
-        </View>
-        
-        <View style={styles.headerButtons}>
-          <Button
-            mode="outlined"
-            onPress={() => router.push('/account/edit')}
-            style={[styles.headerButton, { marginRight: 8 }]}
-            icon="account-edit"
-            compact
-          >
-            Conta
-          </Button>
-          
-          <Button
-            mode="outlined"
-            onPress={async () => {
-              await signOut();
-            }}
-            style={styles.headerButton}
-            icon="logout"
-            compact
-          >
-            Sair
-          </Button>
-        </View>
-      </View>
-
       <FlatList
         data={pets}
         renderItem={renderPet}
         keyExtractor={(item) => item.id.toString()}
         contentContainerStyle={styles.list}
+        showsVerticalScrollIndicator={false}
+        ListHeaderComponent={
+          <View style={styles.headerRow}>
+            <View style={styles.header}>
+              <Text variant="headlineMedium" style={styles.welcomeText}>
+                Olá, {user?.nome}!
+              </Text>
+              <Text variant="bodyLarge" style={styles.subtitle}>
+                Gerencie seus pets aqui
+              </Text>
+            </View>
+            
+            <View style={styles.headerButtons}>
+              <Button
+                mode="outlined"
+                onPress={() => router.push('/account/edit')}
+                style={[styles.headerButton, { marginRight: 8 }]}
+                icon="account-edit"
+                compact
+              >
+                Conta
+              </Button>
+              
+              <Button
+                mode="outlined"
+                onPress={async () => {
+                  await signOut();
+                }}
+                style={styles.headerButton}
+                icon="logout"
+                compact
+              >
+                Sair
+              </Button>
+            </View>
+          </View>
+        }
         ListEmptyComponent={
           <Surface style={styles.emptyContainer} elevation={1}>
             <Text style={styles.emptyEmoji}>🐾</Text>
@@ -212,6 +217,7 @@ export default function PetsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    paddingTop: 50,
   },
   background: {
     position: 'absolute',
@@ -224,10 +230,11 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    paddingTop: 50,
   },
   header: {
-    padding: 16,
-    paddingTop: 8,
+    flex: 1,
+    paddingLeft: 16,
   },
   welcomeText: {
     color: theme.colors.primary,
@@ -237,7 +244,8 @@ const styles = StyleSheet.create({
     color: '#666',
   },
   list: {
-    padding: 16,
+    paddingHorizontal: 16,
+    paddingBottom: 100,
   },
   card: {
     marginBottom: 16,
@@ -245,35 +253,48 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   petImageContainer: {
-    height: 120,
+    height: 200, // Aumentado de 120 para 200
     backgroundColor: theme.colors.primary,
     justifyContent: 'center',
     alignItems: 'center',
     overflow: 'hidden',
+    position: 'relative',
   },
   petImagePreview: {
     width: '100%',
     height: '100%',
     resizeMode: 'cover',
   },
+  petImagePlaceholder: {
+    width: '100%',
+    height: '100%',
+    backgroundColor: '#f5f5f5',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   petEmoji: {
     fontSize: 48,
   },
   petInfo: {
     padding: 16,
+    backgroundColor: '#fff',
   },
   petName: {
     fontWeight: 'bold',
     marginBottom: 4,
+    fontSize: 18,
+    color: '#333',
   },
   petBreed: {
     color: '#666',
+    fontSize: 14,
   },
   petActions: {
     flexDirection: 'row',
     padding: 16,
-    paddingTop: 0,
+    paddingTop: 8,
     gap: 8,
+    backgroundColor: '#fff',
   },
   actionButton: {
     flex: 1,
@@ -290,6 +311,7 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     alignItems: 'center',
     backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    marginTop: 20,
   },
   emptyEmoji: {
     fontSize: 48,
@@ -307,8 +329,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    padding: 16,
-    paddingTop: 8,
+    paddingVertical: 16,
+    paddingRight: 16,
+    marginBottom: 8,
   },
   headerButtons: {
     flexDirection: 'row',
@@ -321,4 +344,4 @@ const styles = StyleSheet.create({
     marginLeft: 8,
     alignSelf: 'flex-start',
   },
-}); 
+});
