@@ -22,16 +22,15 @@ export default function EditPetScreen() {
   const [foto, setFoto] = useState<string | null>(null);
   const [foto_url, setFotoUrl] = useState<string | null>(null);
   const { user } = useAuth();
-  // Função para validar se o texto contém apenas números
+
   const handleIdadeChange = (text: string) => {
-    // Remove todos os caracteres que não são números
     const numericValue = text.replace(/[^0-9]/g, '');
     setIdade(numericValue);
   };
+
   function getPetImageUrl(foto_url: string | null) {
     if (!foto_url) return undefined;
     if (foto_url.startsWith('http')) {
-      // Corrige URLs antigas que ainda têm localhost
       if (foto_url.includes('localhost:3000')) {
         return foto_url.replace('http://localhost:3000', API_URL);
       }
@@ -39,8 +38,6 @@ export default function EditPetScreen() {
     }
     return `${API_URL}${foto_url.startsWith('/') ? '' : '/'}${foto_url}`;
   }
-
-  // Função para selecionar imagem
   const pickImage = async () => {
     try {
       const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -66,11 +63,11 @@ export default function EditPetScreen() {
     }
   };
 
-  // Função para fazer upload da imagem
   const uploadImage = async (uri: string): Promise<string> => {
     try {
       console.log('Iniciando upload da imagem...');
       const formData = new FormData();
+      
       if (Platform.OS === 'web') {
         const response = await fetch(uri);
         const blob = await response.blob();
@@ -82,6 +79,7 @@ export default function EditPetScreen() {
           name: 'pet-photo.jpg',
         } as any);
       }
+
       const token = await AsyncStorage.getItem('access_token');
       const uploadResponse = await fetch(`${API_URL}/upload`, {
         method: 'POST',
@@ -90,10 +88,12 @@ export default function EditPetScreen() {
         },
         body: formData,
       });
+
       if (!uploadResponse.ok) {
         const errorData = await uploadResponse.json();
         throw new Error(errorData.message || 'Erro no upload da imagem');
       }
+
       const uploadResult = await uploadResponse.json();
       console.log('Upload concluído:', uploadResult);
       return uploadResult.url;
@@ -108,12 +108,15 @@ export default function EditPetScreen() {
       loadPet();
     }
   }, [id]);
-
   async function loadPet() {
     try {
       setLoading(true);
       const response = await fetch(`${API_URL}/pets/${id}`);
-      if (!response.ok) throw new Error('Erro ao carregar pet');
+      
+      if (!response.ok) {
+        throw new Error('Erro ao carregar pet');
+      }
+      
       const pet = await response.json();
 
       setNome(pet.nome || '');
@@ -131,7 +134,6 @@ export default function EditPetScreen() {
       setLoading(false);
     }
   }
-
   async function handleSubmit() {
     if (!nome || !raca || !especie || !idade || !sexo || !corPelagem) {
       Alert.alert('Erro', 'Por favor, preencha todos os campos');
@@ -151,8 +153,8 @@ export default function EditPetScreen() {
     try {
       setLoading(true);
 
-      // Upload da nova imagem se foi selecionada
-      let foto_url_final = foto_url; // Manter a foto existente por padrão
+      let foto_url_final = foto_url;
+      
       if (foto && foto !== foto_url) {
         try {
           console.log('Fazendo upload da nova foto...');
@@ -161,7 +163,7 @@ export default function EditPetScreen() {
         } catch (error: any) {
           console.log('Erro no upload da nova foto:', error);
           Alert.alert('Aviso', `Não foi possível fazer upload da nova foto: ${error.message}. O pet será salvo com a foto anterior.`);
-          foto_url_final = foto_url; // Manter a foto anterior
+          foto_url_final = foto_url;
         }
       }
 
@@ -191,7 +193,8 @@ export default function EditPetScreen() {
 
       Alert.alert('Sucesso', 'Pet atualizado com sucesso');
       router.replace(`/pets/${id}`);
-    } catch (error: any) {      console.error('Erro ao atualizar pet:', error);
+    } catch (error: any) {
+      console.error('Erro ao atualizar pet:', error);
       Alert.alert('Erro', `Não foi possível atualizar o pet: ${error.message}`);
     } finally {
       setLoading(false);
@@ -205,28 +208,31 @@ export default function EditPetScreen() {
       </View>
     );
   }
-
   return (
     <View style={styles.container}>
       <LinearGradient
         colors={['#f6f6f6', '#ffffff']}
         style={styles.background}
       />
-
+      
       <ScrollView contentContainerStyle={styles.scrollContent}>
-        <Surface style={[styles.card, themeStyles.shadow]} elevation={2}>          <Text variant="headlineMedium" style={styles.title}>
+        <Surface style={[styles.card, themeStyles.shadow]} elevation={2}>
+          <Text variant="headlineMedium" style={styles.title}>
             Editar Pet
           </Text>
 
-          {/* Seção de Foto */}
           <View style={styles.fotoContainer}>
             {(foto || foto_url) ? (
-              <Image source={{ uri: foto || getPetImageUrl(foto_url) || '' }} style={styles.foto} />
+              <Image 
+                source={{ uri: foto || getPetImageUrl(foto_url) || '' }} 
+                style={styles.foto} 
+              />
             ) : (
               <View style={styles.fotoPlaceholder}>
                 <Text style={styles.fotoPlaceholderText}>Sem foto</Text>
               </View>
             )}
+            
             <Button
               mode="outlined"
               onPress={pickImage}
@@ -235,6 +241,7 @@ export default function EditPetScreen() {
             >
               {(foto || foto_url) ? 'Alterar Foto' : 'Adicionar Foto'}
             </Button>
+            
             {(foto || foto_url) && (
               <Button
                 mode="text"
@@ -320,8 +327,8 @@ export default function EditPetScreen() {
           <View style={styles.switchContainer}>
             <Text style={styles.switchLabel}>Castrado(a):</Text>
             <Switch
-                value={castrado}
-                onValueChange={setCastrado}
+              value={castrado}
+              onValueChange={setCastrado}
             />
           </View>
 

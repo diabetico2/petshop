@@ -58,6 +58,12 @@ function AppStack() {
             title: 'Editar Produto/Serviço',
           }}
         />
+        <Stack.Screen
+          name="account/edit"
+          options={{
+            title: 'Editar Conta',
+          }}
+        />
       </Stack>
   );
 }

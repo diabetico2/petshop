@@ -33,7 +33,13 @@ export class UsuarioController {
     @Patch(':id')
     async atualizarUsuario(
         @Param('id') id: string,
-        @Body() dados: { nome?: string; email?: string; senha?: string }
+        @Body() dados: { 
+            nome?: string; 
+            email?: string; 
+            senha?: string;
+            senhaAtual?: string;
+            novaSenha?: string;
+        }
     ): Promise<Usuario> {
         return this.usuarioService.atualizarUsuario(id, dados);
     }

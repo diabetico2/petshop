@@ -142,17 +142,31 @@ export default function PetsScreen() {
             Gerencie seus pets aqui
           </Text>
         </View>
-        <Button
-          mode="outlined"
-          onPress={async () => {
-            await signOut();
-            router.replace('/');
-          }}
-          style={styles.logoutButton}
-          icon="logout"
-        >
-          Sair
-        </Button>
+        
+        <View style={styles.headerButtons}>
+          <Button
+            mode="outlined"
+            onPress={() => router.push('/account/edit')}
+            style={[styles.headerButton, { marginRight: 8 }]}
+            icon="account-edit"
+            compact
+          >
+            Conta
+          </Button>
+          
+          <Button
+            mode="outlined"
+            onPress={async () => {
+              await signOut();
+              router.replace('/');
+            }}
+            style={styles.headerButton}
+            icon="logout"
+            compact
+          >
+            Sair
+          </Button>
+        </View>
       </View>
 
       <FlatList
@@ -288,6 +302,13 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     padding: 16,
     paddingTop: 8,
+  },
+  headerButtons: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  headerButton: {
+    alignSelf: 'flex-start',
   },
   logoutButton: {
     marginLeft: 8,

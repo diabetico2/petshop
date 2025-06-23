@@ -31,28 +31,28 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     // Tenta carregar o usuário ao iniciar
     const fetchUser = async () => {
-      const token = await getToken();
-      if (!token) {
+      const userId = await getToken();
+      if (!userId) {
         setLoading(false);
         return;
       }
       try {
-        const res = await fetch(`${API_URL}/auth/me`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        const res = await fetch(`${API_URL}/usuarios/${userId}`);
         if (res.ok) {
           const userData = await res.json();
-        setUser({
+          setUser({
             id: userData.id,
             email: userData.email,
             nome: userData.nome,
             created_at: userData.created_at,
-        });
-      } else {
+          });
+        } else {
           setUser(null);
+          await clearToken();
         }
       } catch {
         setUser(null);
+        await clearToken();
       }
       setLoading(false);
     };
@@ -69,14 +69,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || 'Erro ao logar');
-      // data já é o usuário retornado pelo backend
-        setUser({
+      
+      // Salvar o ID do usuário como token temporário
+      await saveToken(data.id);
+      
+      setUser({
         id: data.id,
         email: data.email,
         nome: data.nome,
         created_at: data.created_at,
-        });
-      // Se o backend retornar um token, salve aqui (exemplo: saveToken(data.token))
+      });
     } finally {
       setLoading(false);
     }
