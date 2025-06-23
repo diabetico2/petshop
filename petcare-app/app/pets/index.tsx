@@ -25,6 +25,12 @@ export default function PetsScreen() {
     }, [user, authLoading])
   );
 
+  function getPetImageUrl(foto_url: string | null) {
+    if (!foto_url) return undefined;
+    if (foto_url.startsWith('http')) return foto_url;
+    return `${API_URL}${foto_url.startsWith('/') ? '' : '/'}${foto_url}`;
+  }
+
   async function loadPets() {
     try {
       setLoading(true);
@@ -33,7 +39,7 @@ export default function PetsScreen() {
       const data = await response.json();
       setPets(data || []);
     } catch (error) {
-      Alert.alert('Erro', `Não foi possível carregar os pets: ${error.message}`);
+      Alert.alert('Erro', `Não foi possível carregar os pets: ${(error as Error).message}`);
     } finally {
       setLoading(false);
     }
@@ -75,7 +81,7 @@ export default function PetsScreen() {
     <Surface style={[styles.card, themeStyles.shadow]} elevation={2}>
       <View style={styles.petImageContainer}>
         {item.foto_url ? (
-          <Image source={{ uri: item.foto_url }} style={styles.petImagePreview} />
+          <Image source={{ uri: getPetImageUrl(item.foto_url) }} style={styles.petImagePreview} />
         ) : (
           <Text style={styles.petEmoji}>🐾</Text>
         )}

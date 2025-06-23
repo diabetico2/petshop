@@ -55,6 +55,7 @@ npm install
 - Crie um arquivo `.env` com as variáveis:
   ```env
   DATABASE_URL=postgresql://usuario:senha@host:porta/dbname # string do Railway
+  BASE_URL=https://petshop-production.up.railway.app # URL base para uploads
   JWT_SECRET=sua_chave_secreta
   PORT=3000
   ```
@@ -69,9 +70,14 @@ npm install
 cd ../petcare-app
 npm install
 ```
-- Crie um arquivo `.env` (se necessário) e defina a URL do backend:
+- O app está configurado para usar automaticamente o backend online em produção.
+- A URL do backend é definida em `petcare-app/.env`:
   ```env
-  API_URL=http://localhost:3000 # ou IP da sua máquina na rede
+  EXPO_PUBLIC_API_URL=https://petshop-production.up.railway.app
+  ```
+- Para desenvolvimento local, você pode alterar para:
+  ```env
+  EXPO_PUBLIC_API_URL=http://localhost:3000
   ```
 - Inicie o app:
   ```bash

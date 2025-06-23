@@ -11,9 +11,15 @@ dotenv.config();
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
 
-  // Habilita CORS para qualquer origem (ou especifique a origem do seu frontend)
+  // Habilita CORS para múltiplas origens
   app.enableCors({
-    origin: 'http://localhost:8081', // ou use '*' para liberar tudo (apenas para dev)
+    origin: [
+      'http://localhost:8081', // Para desenvolvimento local
+      'https://petshop-production.up.railway.app', // URL do backend
+      /^https:\/\/.*\.expo\.dev$/, // Para Expo Go
+      /^https:\/\/.*\.vercel\.app$/, // Se usar Vercel
+      '*' // Para desenvolvimento, remover em produção
+    ],
     credentials: true,
   });
 

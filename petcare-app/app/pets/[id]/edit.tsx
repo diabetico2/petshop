@@ -189,6 +189,12 @@ export default function EditPetScreen() {
     }
   }
 
+  function getPetImageUrl(foto_url: string | null) {
+    if (!foto_url) return undefined;
+    if (foto_url.startsWith('http')) return foto_url;
+    return `${API_URL}${foto_url.startsWith('/') ? '' : '/'}${foto_url}`;
+  }
+
   if (loading) {
     return (
       <View style={styles.container}>
@@ -211,9 +217,8 @@ export default function EditPetScreen() {
           </Text>
 
           {/* Seção de Foto */}
-          <View style={styles.fotoContainer}>
-            {(foto || foto_url) ? (
-              <Image source={{ uri: foto || foto_url || '' }} style={styles.foto} />
+          <View style={styles.fotoContainer}>            {(foto || foto_url) ? (
+              <Image source={{ uri: foto || getPetImageUrl(foto_url) || '' }} style={styles.foto} />
             ) : (
               <View style={styles.fotoPlaceholder}>
                 <Text style={styles.fotoPlaceholderText}>Sem foto</Text>
@@ -424,4 +429,4 @@ const styles = StyleSheet.create({
   removeFotoButton: {
     marginTop: 4,
   },
-}); 
+});

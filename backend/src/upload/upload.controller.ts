@@ -26,14 +26,14 @@ export class UploadController {
         fileSize: 5 * 1024 * 1024, // 5MB
       },
     }),
-  )
-  async uploadFile(@UploadedFile() file: Express.Multer.File) {
+  )  async uploadFile(@UploadedFile() file: Express.Multer.File) {
     if (!file) {
       throw new BadRequestException('Nenhum arquivo foi enviado');
     }
 
-    // Retorna a URL da imagem (você pode ajustar conforme sua configuração)
-    const imageUrl = `http://localhost:3000/uploads/${file.filename}`;
+    // Usa a URL base do ambiente ou uma URL padrão
+    const baseUrl = process.env.BASE_URL || 'https://petshop-production.up.railway.app';
+    const imageUrl = `${baseUrl}/uploads/${file.filename}`;
     
     return {
       url: imageUrl,
