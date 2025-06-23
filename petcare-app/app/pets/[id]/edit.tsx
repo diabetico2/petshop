@@ -22,13 +22,23 @@ export default function EditPetScreen() {
   const [foto, setFoto] = useState<string | null>(null);
   const [foto_url, setFotoUrl] = useState<string | null>(null);
   const { user } = useAuth();
-
   // Função para validar se o texto contém apenas números
   const handleIdadeChange = (text: string) => {
     // Remove todos os caracteres que não são números
     const numericValue = text.replace(/[^0-9]/g, '');
     setIdade(numericValue);
   };
+  function getPetImageUrl(foto_url: string | null) {
+    if (!foto_url) return undefined;
+    if (foto_url.startsWith('http')) {
+      // Corrige URLs antigas que ainda têm localhost
+      if (foto_url.includes('localhost:3000')) {
+        return foto_url.replace('http://localhost:3000', API_URL);
+      }
+      return foto_url;
+    }
+    return `${API_URL}${foto_url.startsWith('/') ? '' : '/'}${foto_url}`;
+  }
 
   // Função para selecionar imagem
   const pickImage = async () => {
@@ -181,18 +191,11 @@ export default function EditPetScreen() {
 
       Alert.alert('Sucesso', 'Pet atualizado com sucesso');
       router.replace(`/pets/${id}`);
-    } catch (error: any) {
-      console.error('Erro ao atualizar pet:', error);
+    } catch (error: any) {      console.error('Erro ao atualizar pet:', error);
       Alert.alert('Erro', `Não foi possível atualizar o pet: ${error.message}`);
     } finally {
       setLoading(false);
     }
-  }
-
-  function getPetImageUrl(foto_url: string | null) {
-    if (!foto_url) return undefined;
-    if (foto_url.startsWith('http')) return foto_url;
-    return `${API_URL}${foto_url.startsWith('/') ? '' : '/'}${foto_url}`;
   }
 
   if (loading) {
@@ -211,13 +214,13 @@ export default function EditPetScreen() {
       />
 
       <ScrollView contentContainerStyle={styles.scrollContent}>
-        <Surface style={[styles.card, themeStyles.shadow]} elevation={2}>
-          <Text variant="headlineMedium" style={styles.title}>
+        <Surface style={[styles.card, themeStyles.shadow]} elevation={2}>          <Text variant="headlineMedium" style={styles.title}>
             Editar Pet
           </Text>
 
           {/* Seção de Foto */}
-          <View style={styles.fotoContainer}>            {(foto || foto_url) ? (
+          <View style={styles.fotoContainer}>
+            {(foto || foto_url) ? (
               <Image source={{ uri: foto || getPetImageUrl(foto_url) || '' }} style={styles.foto} />
             ) : (
               <View style={styles.fotoPlaceholder}>

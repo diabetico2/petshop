@@ -27,7 +27,13 @@ export default function PetsScreen() {
 
   function getPetImageUrl(foto_url: string | null) {
     if (!foto_url) return undefined;
-    if (foto_url.startsWith('http')) return foto_url;
+    if (foto_url.startsWith('http')) {
+      // Corrige URLs antigas que ainda têm localhost
+      if (foto_url.includes('localhost:3000')) {
+        return foto_url.replace('http://localhost:3000', API_URL);
+      }
+      return foto_url;
+    }
     return `${API_URL}${foto_url.startsWith('/') ? '' : '/'}${foto_url}`;
   }
 
