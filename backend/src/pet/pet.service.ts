@@ -5,7 +5,12 @@ import { PrismaClient } from '@prisma/client';
 export class PetService {
     private readonly prisma = new PrismaClient();
 
-    async listarPets(): Promise<any[]> {
+    async listarPets(userId?: string): Promise<any[]> {
+        if (userId) {
+            return this.prisma.pet.findMany({
+                where: { user_id: userId }
+            });
+        }
         return this.prisma.pet.findMany();
     }
 

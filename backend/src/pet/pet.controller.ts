@@ -7,6 +7,7 @@ import {
   Param,
   Delete,
   ParseIntPipe,
+  Query,
 } from '@nestjs/common';
 import { Pet as ModelPet } from 'generated/prisma';
 import { PetService } from './pet.service';
@@ -18,8 +19,8 @@ export class PetController {
   constructor(private readonly petService: PetService) {}
 
   @Get()
-  async getPets(): Promise<ModelPet[]> {
-    return this.petService.listarPets();
+  async getPets(@Query('userId') userId?: string): Promise<ModelPet[]> {
+    return this.petService.listarPets(userId);
   }
 
   @Get(':id')
