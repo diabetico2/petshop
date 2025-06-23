@@ -1,4 +1,4 @@
-import { PrismaClient } from 'generated/prisma';
+import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
@@ -8,7 +8,7 @@ export async function fixOldImageUrls() {
   // Atualizar pets com URLs antigas
   const petsWithOldUrls = await prisma.pet.findMany({
     where: {
-      fotoUrl: {
+      foto_url: {
         contains: 'localhost:3000'
       }
     }
