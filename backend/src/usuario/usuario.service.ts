@@ -34,7 +34,6 @@ export class UsuarioService {
         nome?: string; 
         email?: string; 
         senha?: string;
-        senhaAtual?: string;
         novaSenha?: string;
     }): Promise<any> {
         // Verificar se o usuário existe
@@ -59,16 +58,6 @@ export class UsuarioService {
 
         // Verificar se está tentando alterar a senha
         if (dados.novaSenha) {
-            if (!dados.senhaAtual) {
-                throw new BadRequestException('Senha atual é obrigatória para alterar a senha');
-            }
-
-            // Verificar se a senha atual está correta
-            const senhaAtualCorreta = await bcrypt.compare(dados.senhaAtual, usuarioExistente.senha);
-            if (!senhaAtualCorreta) {
-                throw new BadRequestException('Senha atual incorreta');
-            }
-
             // Hash da nova senha
             const saltRounds = 10;
             dadosParaAtualizar.senha = await bcrypt.hash(dados.novaSenha, saltRounds);

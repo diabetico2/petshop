@@ -37,7 +37,6 @@ export class UsuarioController {
             nome?: string; 
             email?: string; 
             senha?: string;
-            senhaAtual?: string;
             novaSenha?: string;
         }
     ): Promise<Usuario> {

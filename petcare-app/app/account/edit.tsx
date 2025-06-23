@@ -6,13 +6,11 @@ import { styles as themeStyles, theme } from '../../theme';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useAuth } from '../../contexts/AuthContext';
 import { API_URL } from '../../lib/api';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function EditAccountScreen() {
   const { user, signOut } = useAuth();
   const [nome, setNome] = useState(user?.nome || '');
   const [email, setEmail] = useState(user?.email || '');
-  const [senhaAtual, setSenhaAtual] = useState('');
   const [novaSenha, setNovaSenha] = useState('');
   const [confirmarSenha, setConfirmarSenha] = useState('');
   const [loading, setLoading] = useState(false);
@@ -38,11 +36,6 @@ export default function EditAccountScreen() {
       return;
     }
 
-    if (novaSenha && !senhaAtual) {
-      Alert.alert('Erro', 'Para alterar a senha, você deve informar a senha atual');
-      return;
-    }
-
     if (novaSenha && novaSenha.length < 6) {
       Alert.alert('Erro', 'A nova senha deve ter pelo menos 6 caracteres');
       return;
@@ -56,7 +49,9 @@ export default function EditAccountScreen() {
     if (!user) {
       Alert.alert('Erro', 'Usuário não autenticado');
       return;
-    }    try {
+    }
+
+    try {
       setLoading(true);
 
       const updateData: any = {
@@ -65,9 +60,10 @@ export default function EditAccountScreen() {
       };
 
       if (novaSenha) {
-        updateData.senhaAtual = senhaAtual;
         updateData.novaSenha = novaSenha;
-      }      const response = await fetch(`${API_URL}/usuarios/${user.id}`, {
+      }
+
+      const response = await fetch(`${API_URL}/usuarios/${user.id}`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -87,18 +83,14 @@ export default function EditAccountScreen() {
           {
             text: 'OK',
             onPress: () => {
-              // Se a senha foi alterada, fazer logout para segurança
               if (novaSenha) {
                 Alert.alert(
                   'Senha Alterada',
-                  'Sua senha foi alterada. Por segurança, você será desconectado e precisará fazer login novamente.',
+                  'Sua senha foi alterada com sucesso!',
                   [
                     {
                       text: 'OK',
-                      onPress: () => {
-                        signOut();
-                        router.replace('/');
-                      }
+                      onPress: () => router.back()
                     }
                   ]
                 );
@@ -129,9 +121,10 @@ export default function EditAccountScreen() {
         {
           text: 'Excluir',
           style: 'destructive',
-          onPress: async () => {            try {
+          onPress: async () => {
+            try {
               setLoading(true);
-                const response = await fetch(`${API_URL}/usuarios/${user?.id}`, {
+              const response = await fetch(`${API_URL}/usuarios/${user?.id}`, {
                 method: 'DELETE',
               });
 
@@ -213,16 +206,6 @@ export default function EditAccountScreen() {
           <Text variant="titleMedium" style={[styles.sectionTitle, { marginTop: 24 }]}>
             Alterar Senha (Opcional)
           </Text>
-
-          <TextInput
-            label="Senha atual"
-            value={senhaAtual}
-            onChangeText={setSenhaAtual}
-            mode="outlined"
-            style={styles.input}
-            secureTextEntry
-            left={<TextInput.Icon icon="lock" />}
-          />
 
           <TextInput
             label="Nova senha"
