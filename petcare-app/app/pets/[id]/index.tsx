@@ -250,6 +250,12 @@ export default function PetDetailsScreen() {
                     )}
                   </>
                 )}
+                {produto.observacoes && (
+                  <View style={styles.productDetailItem}>
+                    <Icon name="note" size={16} color="#666" />
+                    <Text style={styles.productDetailText}>Observações: {produto.observacoes}</Text>
+                  </View>
+                )}
               </View>
             </View>
           ))}
