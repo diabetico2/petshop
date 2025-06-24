@@ -20,15 +20,15 @@ export interface User {
 export interface Pet {
   id: string;
   nome: string;
-  especie: string;
-  raca: string;
-  idade: number;
-  sexo: string;
-  corPelagem: string;
+  raca?: string;
+  idade?: number;
+  sexo?: string;
+  especie?: string;
+  corPelagem?: string; // Corrigir de 'cor' para 'pelagem'
   castrado: boolean;
-  user_id: string;
-  created_at: string;
   foto_url?: string;
+  usuario_id: string;
+  created_at: string;
 }
 
 export interface Produto {
@@ -43,4 +43,4 @@ export interface Produto {
   observacoes?: string;
   quantidade_vezes?: number;
   quando_consumir?: string;
-} 
+}

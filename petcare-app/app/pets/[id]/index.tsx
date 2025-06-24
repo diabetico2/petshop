@@ -151,6 +151,14 @@ export default function PetDetailsScreen() {
             </View>
 
             <View style={styles.infoItem}>
+              <Icon name="palette" size={20} color="#667eea" />
+              <View style={styles.infoTextContainer}>
+                <Text style={styles.infoLabel}>Cor/Pelagem</Text>
+                <Text style={styles.infoValue}>{pet.corPelagem || 'Não informado'}</Text>
+              </View>
+            </View>
+
+            <View style={styles.infoItem}>
               <Icon name={pet.castrado ? 'check-circle' : 'cancel'} size={20} color={pet.castrado ? '#4caf50' : '#ff9800'} />
               <View style={styles.infoTextContainer}>
                 <Text style={styles.infoLabel}>Castração</Text>
